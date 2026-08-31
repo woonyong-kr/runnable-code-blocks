@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0
+
+- Expand the stable Markdown contract to 21 exact languages with IntelliJ-style syntax modes and generated examples.
+- Add Wandbox, Kotlin Playground, SwiftFiddle, and DartPad remote adapters for a static-site deployment without a project-owned execution server.
+- Add browser-native JavaScript, TypeScript, HTML, and CSS adapters plus 18 local toolchain adapters for Obsidian Desktop.
+- Compose configurable remote-first or private-first execution and stop fallback when a remote outcome may already have executed.
+- Show the environment and named provider that actually completed each fallback run.
+- Detect existing local runtimes without installing them or mutating PATH; use private temporary workspaces, direct process spawning, timeouts, output caps, and cleanup.
+- Isolate provider-specific implementation and tests so service changes normally require only an adapter patch.
+- Let editors grow through 100 source lines plus two numbered editing lines before showing an internal scrollbar.
+
 ## 0.1.4
 
 - Display the complete supported-language list and each environment boundary in the browser demo and Obsidian settings.

@@ -23,7 +23,7 @@ const format = (value) => {
   try { return JSON.stringify(value, null, 2); } catch { return String(value); }
 };
 const blocked = () => Promise.reject(new Error("Network access is disabled in runnable code blocks."));
-for (const name of ["fetch", "XMLHttpRequest", "WebSocket", "EventSource", "importScripts"]) {
+for (const name of ["fetch", "XMLHttpRequest", "WebSocket", "WebSocketStream", "WebTransport", "EventSource", "importScripts"]) {
   try { Object.defineProperty(globalThis, name, { configurable: false, value: blocked, writable: false }); } catch {}
 }
 self.onmessage = async (event) => {
@@ -72,6 +72,16 @@ export class BrowserJavaScriptRunner implements CodeRunner {
   }
 
   async run(code: string): Promise<RunResult> {
+    if (/\bimport\s*\(/u.test(code)) {
+      return {
+        durationMs: 0,
+        environment: "browser",
+        exitCode: 1,
+        provider: "Web Worker",
+        stderr: "Dynamic import is disabled because it can bypass the browser runner's network boundary.",
+        stdout: ""
+      };
+    }
     const token = globalThis.crypto.randomUUID();
     const url = this.#urlFactory(new Blob([WORKER_SOURCE], { type: "text/javascript" }));
     const worker = this.#workerFactory(url);

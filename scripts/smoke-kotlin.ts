@@ -1,6 +1,6 @@
-import { LocalKotlinRunner } from "../src/runners/kotlin-runner";
+import { LocalLanguageRunner } from "../src/runners/local-language-runner";
 
-const runner = new LocalKotlinRunner();
+const runner = new LocalLanguageRunner({ language: "kotlin" });
 const availability = await runner.availability();
 if (!availability.available) throw new Error(availability.detail);
 
@@ -20,4 +20,3 @@ console.log(
     status: "ok"
   })
 );
-

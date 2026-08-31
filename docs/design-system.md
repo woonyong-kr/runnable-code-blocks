@@ -23,6 +23,7 @@ The contract is intentionally a design and interaction contract, not a runtime d
 ## Density rules
 
 - Content determines panel height until a documented maximum is reached.
+- The editor grows through 100 source lines plus two numbered editing lines; internal scrolling starts with source line 101.
 - Empty output, detail, and search regions do not reserve space.
 - Secondary actions stay quiet and appear only when relevant.
 - Primary content must remain usable at 390 CSS pixels without horizontal page overflow.

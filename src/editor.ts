@@ -7,7 +7,18 @@ import {
   StreamLanguage,
   syntaxHighlighting
 } from "@codemirror/language";
-import { kotlin } from "@codemirror/legacy-modes/mode/clike";
+import { c, cpp, csharp, dart, java, kotlin, scala } from "@codemirror/legacy-modes/mode/clike";
+import { css } from "@codemirror/legacy-modes/mode/css";
+import { go } from "@codemirror/legacy-modes/mode/go";
+import { lua } from "@codemirror/legacy-modes/mode/lua";
+import { python } from "@codemirror/legacy-modes/mode/python";
+import { r } from "@codemirror/legacy-modes/mode/r";
+import { ruby } from "@codemirror/legacy-modes/mode/ruby";
+import { rust } from "@codemirror/legacy-modes/mode/rust";
+import { shell } from "@codemirror/legacy-modes/mode/shell";
+import { sqlite } from "@codemirror/legacy-modes/mode/sql";
+import { swift } from "@codemirror/legacy-modes/mode/swift";
+import { html } from "@codemirror/legacy-modes/mode/xml";
 import { EditorState } from "@codemirror/state";
 import {
   drawSelection,
@@ -32,6 +43,11 @@ export const INTELLIJ_DARCULA_COLORS = {
   string: "#6AAB73",
   type: "#C77DBB"
 } as const;
+
+export const EDITOR_SOURCE_LINE_LIMIT = 100;
+export const EDITOR_TRAILING_BLANK_LINE_COUNT = 2;
+export const EDITOR_MAX_VISIBLE_LINE_COUNT =
+  EDITOR_SOURCE_LINE_LIMIT + EDITOR_TRAILING_BLANK_LINE_COUNT;
 
 function syntaxColor(name: keyof typeof INTELLIJ_DARCULA_COLORS): string {
   return `var(--rcb-syntax-${name}, ${INTELLIJ_DARCULA_COLORS[name]})`;
@@ -121,8 +137,30 @@ let editorLabelSequence = 0;
 
 function languageExtension(language: string) {
   if (language === "javascript") return javascript();
+  if (language === "typescript") return javascript({ typescript: true });
   if (language === "kotlin") return StreamLanguage.define(intellijKotlin);
-  return [];
+  const modes: Record<string, StreamParser<unknown>> = {
+    c,
+    cpp,
+    csharp,
+    css,
+    dart,
+    go,
+    html,
+    java,
+    lua,
+    php: html,
+    python,
+    r,
+    ruby,
+    rust,
+    scala,
+    shell,
+    sql: sqlite,
+    swift
+  };
+  const mode = modes[language];
+  return mode === undefined ? [] : StreamLanguage.define(mode);
 }
 
 export function createRunnableEditor(
@@ -132,6 +170,10 @@ export function createRunnableEditor(
   onRun: () => void,
   onChange?: (value: string) => void
 ): RunnableEditor {
+  parent.style.setProperty(
+    "--rcb-editor-max-height",
+    `calc(${String(EDITOR_MAX_VISIBLE_LINE_COUNT)}lh + 16px)`
+  );
   const accessibleLabel = document.createElement("span");
   accessibleLabel.className = "rcb__sr-only";
   accessibleLabel.id = `rcb-editor-label-${String(++editorLabelSequence)}`;

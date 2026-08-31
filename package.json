@@ -1,6 +1,6 @@
 {
   "name": "runnable-code-blocks",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "description": "Environment-adapted runnable Markdown code blocks for Obsidian and static websites.",
   "main": "main.js",
   "type": "module",
@@ -10,6 +10,8 @@
     "check": "tsc --noEmit && eslint src tests site && node --check scripts/verify-release.mjs",
     "test": "vitest run --coverage",
     "smoke:kotlin": "tsx scripts/smoke-kotlin.ts",
+    "smoke:local": "tsx scripts/smoke-local.ts",
+    "smoke:remote": "tsx scripts/smoke-remote.ts",
     "verify:release": "node scripts/verify-release.mjs",
     "verify": "npm run check && npm test && npm run build && npm run verify:release && npm pack --dry-run"
   },
@@ -18,7 +20,8 @@
     "markdown",
     "code-runner",
     "kotlin",
-    "javascript"
+    "javascript",
+    "polyglot"
   ],
   "author": "Woonyong Choi",
   "license": "MIT",

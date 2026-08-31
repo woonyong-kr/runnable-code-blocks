@@ -20,23 +20,18 @@ describe("runnable fence contract", () => {
   });
 
   it("lists every implemented language and its environment", () => {
-    expect(SUPPORTED_LANGUAGES).toEqual([
-      {
-        id: "javascript",
-        label: "JavaScript",
-        fence: "run-javascript",
-        obsidian: "Browser Web Worker",
-        browser: "Browser Web Worker"
-      },
-      {
-        id: "kotlin",
-        label: "Kotlin",
-        fence: "run-kotlin",
-        obsidian: "Local kotlinc + java",
-        browser: "Edit only"
-      }
+    expect(SUPPORTED_LANGUAGES.map(({ id }) => id)).toEqual([
+      "javascript", "typescript", "python", "sql", "html", "css", "kotlin", "java",
+      "c", "cpp", "go", "rust", "csharp", "swift", "ruby", "php", "r", "scala",
+      "dart", "lua", "shell"
     ]);
-    expect(supportedLanguagesDescription()).toContain("JavaScript — Obsidian: Browser Web Worker");
-    expect(supportedLanguagesDescription()).toContain("Kotlin — Obsidian: Local kotlinc + java");
+    expect(SUPPORTED_LANGUAGES.every(({ fence, id }) => fence === `run-${id}`)).toBe(true);
+    expect(SUPPORTED_LANGUAGES.find(({ id }) => id === "kotlin")).toMatchObject({
+      remoteAdapter: "kotlin-playground",
+      local: "kotlinc + java"
+    });
+    expect(SUPPORTED_LANGUAGES.filter(({ remoteAdapter }) => remoteAdapter === "wandbox")).toHaveLength(16);
+    expect(supportedLanguagesDescription()).toContain("JavaScript — Obsidian: Wandbox → Web Worker");
+    expect(supportedLanguagesDescription()).toContain("Kotlin — Obsidian: Kotlin Playground → local kotlinc");
   });
 });

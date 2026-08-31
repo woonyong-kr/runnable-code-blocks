@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CodeRunner } from "../src/contracts";
-import { INTELLIJ_DARCULA_COLORS } from "../src/editor";
+import {
+  EDITOR_MAX_VISIBLE_LINE_COUNT,
+  EDITOR_SOURCE_LINE_LIMIT,
+  INTELLIJ_DARCULA_COLORS
+} from "../src/editor";
 import { mountRunnableBlock } from "../src/ui";
 
 function createRunner(overrides: Partial<CodeRunner> = {}): CodeRunner {
@@ -64,6 +68,23 @@ describe("runnable block UI", () => {
     });
   });
 
+  it("lets 100 source lines plus two numbered editing lines grow before scrolling", async () => {
+    const host = document.body.appendChild(document.createElement("div"));
+    mountRunnableBlock(host, {
+      code: Array.from({ length: EDITOR_SOURCE_LINE_LIMIT }, (_, index) => `// ${String(index + 1)}`).join("\n"),
+      language: "javascript",
+      runner: createRunner()
+    });
+    await Promise.resolve();
+
+    const editorHost = host.querySelector<HTMLElement>(".rcb__editor");
+    expect(EDITOR_MAX_VISIBLE_LINE_COUNT).toBe(102);
+    expect(editorHost?.style.getPropertyValue("--rcb-editor-max-height")).toBe(
+      "calc(102lh + 16px)"
+    );
+    expect(EDITOR_MAX_VISIBLE_LINE_COUNT - EDITOR_SOURCE_LINE_LIMIT).toBe(2);
+  });
+
   it("shows runner exceptions as console errors", async () => {
     const host = document.body.appendChild(document.createElement("div"));
     mountRunnableBlock(host, {
@@ -121,6 +142,33 @@ describe("runnable block UI", () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(host.querySelector(".rcb__output")?.textContent).toBe("Process finished with no output.");
+  });
+
+  it("shows the provider environment that actually completed a fallback run", async () => {
+    const host = document.body.appendChild(document.createElement("div"));
+    mountRunnableBlock(host, {
+      code: "console.log('fallback')",
+      language: "javascript",
+      runner: createRunner({
+        environment: "remote",
+        run: async () => ({
+          durationMs: 1,
+          environment: "browser",
+          exitCode: 0,
+          provider: "Web Worker fallback",
+          stderr: "",
+          stdout: "fallback"
+        })
+      })
+    });
+    await Promise.resolve();
+    host.querySelector<HTMLButtonElement>(".rcb__button--run")?.click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(host.querySelector(".rcb")?.getAttribute("data-environment")).toBe("browser");
+    expect(host.querySelector(".rcb__environment-name")?.textContent).toBe("Browser");
+    expect(host.querySelector(".rcb__status")?.getAttribute("title")).toBe("Web Worker fallback");
   });
 
   it("keeps output hidden until execution starts", async () => {

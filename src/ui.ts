@@ -1,5 +1,9 @@
 import type { RunnableBlockSpec, RunResult } from "./contracts";
-import { createRunnableEditor, type RunnableEditor } from "./editor";
+import {
+  createRunnableEditor,
+  EDITOR_TRAILING_BLANK_LINE_COUNT,
+  type RunnableEditor
+} from "./editor";
 
 export interface MountedRunnableBlock {
   dispose(): void;
@@ -33,7 +37,9 @@ function durationLabel(durationMs: number): string {
 }
 
 function environmentLabel(environment: RunnableBlockSpec["runner"]["environment"]): string {
-  return environment === "local" ? "Device" : "Browser";
+  if (environment === "local") return "Device";
+  if (environment === "remote") return "Remote";
+  return "Browser";
 }
 
 function resultText(result: RunResult): string {
@@ -43,7 +49,7 @@ function resultText(result: RunResult): string {
   return parts.join("\n");
 }
 
-function withTrailingBlankLines(code: string, count = 2): string {
+function withTrailingBlankLines(code: string, count = EDITOR_TRAILING_BLANK_LINE_COUNT): string {
   const trailingNewlines = code.match(/\n*$/u)?.[0].length ?? 0;
   return trailingNewlines >= count ? code : code + "\n".repeat(count - trailingNewlines);
 }
@@ -63,9 +69,11 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
   const languageIcon = element("span", "rcb__file-icon");
   languageIcon.append(svgIcon("M7.25 5 3 10l4.25 5M12.75 5 17 10l-4.25 5", "rcb__icon"));
   const environment = element("span", "rcb__environment");
+  const environmentName = element("span", "rcb__environment-name");
+  environmentName.textContent = environmentLabel(spec.runner.environment);
   environment.append(
     element("span", "rcb__environment-dot"),
-    document.createTextNode(environmentLabel(spec.runner.environment))
+    environmentName
   );
   identity.append(
     languageIcon,
@@ -99,7 +107,9 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
   consoleHeader.append(consoleTitle);
   const output = element("pre", "rcb__output", "");
   output.setAttribute("aria-live", "polite");
-  consolePanel.append(consoleHeader, output);
+  const preview = element("div", "rcb__preview");
+  preview.hidden = true;
+  consolePanel.append(consoleHeader, output, preview);
   root.append(toolbar, editorHost, notice, consolePanel);
   host.replaceChildren(root);
 
@@ -107,6 +117,7 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
   let running = false;
   let available = false;
   let availabilityDetail = "";
+  let disposePreview: () => void = () => undefined;
 
   const setDirty = (dirty: boolean) => {
     resetButton.hidden = !dirty;
@@ -121,12 +132,21 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
     status.textContent = "Running";
     consolePanel.hidden = false;
     output.textContent = "";
+    disposePreview();
+    preview.replaceChildren();
+    preview.hidden = true;
     try {
       const result = await spec.runner.run(withoutTrailingDisplayLines(editor.getValue()));
       if (lifecycle.disposed) return;
+      const resultEnvironment = result.environment ?? spec.runner.environment;
+      root.dataset.environment = resultEnvironment;
+      environmentName.textContent = environmentLabel(resultEnvironment);
       root.dataset.state = result.exitCode === 0 ? "success" : "error";
       status.textContent = result.exitCode === 0 ? durationLabel(result.durationMs) : "Failed";
+      status.title = result.provider ?? availabilityDetail;
+      consoleTitle.textContent = result.provider ? `Output · ${result.provider}` : "Output";
       output.textContent = resultText(result) || "Process finished with no output.";
+      if (result.preview !== undefined) disposePreview = renderPreview(preview, result.preview);
     } catch (error) {
       if (lifecycle.disposed) return;
       root.dataset.state = "error";
@@ -149,10 +169,17 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
   resetButton.addEventListener("click", () => {
     if (running) return;
     editor.setValue(editorInitialCode);
+    root.dataset.environment = spec.runner.environment;
+    environmentName.textContent = environmentLabel(spec.runner.environment);
     root.dataset.state = "idle";
     status.textContent = available ? "Ready" : "Unavailable";
     status.title = availabilityDetail;
     output.textContent = "";
+    disposePreview();
+    disposePreview = () => undefined;
+    preview.replaceChildren();
+    preview.hidden = true;
+    consoleTitle.textContent = "Output";
     consolePanel.hidden = true;
     setDirty(false);
     editor.focus();
@@ -173,9 +200,43 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
   return {
     dispose: () => {
       lifecycle.disposed = true;
+      disposePreview();
       editor.destroy();
       spec.runner.dispose?.();
       root.remove();
     }
   };
+}
+
+function renderPreview(host: HTMLElement, preview: NonNullable<RunResult["preview"]>): () => void {
+  const frame = document.createElement("iframe");
+  frame.className = "rcb__preview-frame";
+  frame.setAttribute("sandbox", preview.kind === "html"
+    ? "allow-scripts"
+    : "allow-scripts allow-forms allow-modals allow-popups allow-downloads");
+  frame.setAttribute("title", preview.kind === "html" ? "Code preview" : "Remote code runner");
+  if (preview.html !== undefined) frame.srcdoc = preview.html;
+  if (preview.src !== undefined) frame.src = preview.src;
+  if (preview.postMessage !== undefined) {
+    const inject = () => frame.contentWindow?.postMessage(preview.postMessage, "*");
+    frame.addEventListener("load", inject);
+    const onMessage = (event: MessageEvent) => {
+      if (event.source === frame.contentWindow && isReadyMessage(event.data)) inject();
+    };
+    window.addEventListener("message", onMessage);
+    host.replaceChildren(frame);
+    host.hidden = false;
+    return () => {
+      frame.removeEventListener("load", inject);
+      window.removeEventListener("message", onMessage);
+    };
+  }
+  host.replaceChildren(frame);
+  host.hidden = false;
+  return () => undefined;
+}
+
+function isReadyMessage(value: unknown): boolean {
+  return typeof value === "object" && value !== null && "type" in value
+    && (value as { type?: unknown }).type === "ready";
 }

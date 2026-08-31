@@ -61,6 +61,22 @@ describe("BrowserJavaScriptRunner", () => {
     expect(revoke).toHaveBeenCalledWith("blob:test-worker");
   });
 
+  it("rejects dynamic imports before creating a worker", async () => {
+    const workerFactory = vi.fn();
+    const runner = new BrowserJavaScriptRunner({
+      workerFactory,
+      urlFactory: () => "blob:unused",
+      urlRevoke: () => undefined
+    });
+
+    await expect(runner.run('await import("https://example.com/module.js")')).resolves.toMatchObject({
+      environment: "browser",
+      exitCode: 1,
+      stderr: expect.stringContaining("Dynamic import")
+    });
+    expect(workerFactory).not.toHaveBeenCalled();
+  });
+
   it("terminates code that exceeds the execution timeout", async () => {
     vi.useFakeTimers();
     const worker = new RespondingWorker();

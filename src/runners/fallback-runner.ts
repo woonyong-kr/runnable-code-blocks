@@ -1,0 +1,81 @@
+import type { CodeRunner, RunResult, RunnerAvailability, RunnerEnvironment } from "../contracts";
+import { ProviderUnavailableError } from "./provider-errors";
+
+export class FallbackRunner implements CodeRunner {
+  readonly environment: RunnerEnvironment;
+  readonly language: string;
+  readonly #runners: readonly CodeRunner[];
+  #availability: Array<{ available: boolean; detail: string; runner: CodeRunner }> | null = null;
+
+  constructor(language: string, runners: readonly CodeRunner[]) {
+    if (runners.length === 0) throw new Error(`At least one runner is required for ${language}`);
+    this.language = language;
+    this.#runners = runners;
+    this.environment = runners[0]?.environment ?? "browser";
+  }
+
+  async availability(): Promise<RunnerAvailability> {
+    this.#availability = [];
+    for (const runner of this.#runners) {
+      try {
+        const status = await runner.availability();
+        this.#availability.push({ ...status, runner });
+      } catch (error) {
+        this.#availability.push({
+          available: false,
+          detail: error instanceof Error ? error.message : String(error),
+          runner
+        });
+      }
+    }
+    const available = this.#availability.filter((status) => status.available);
+    return available.length > 0
+      ? {
+          available: true,
+          detail: `Auto: ${available.map(({ runner }) => runner.environment).join(" → ")}. 실행 전 provider 상태를 다시 확인합니다.`
+        }
+      : {
+          available: false,
+          detail: this.#availability.map(({ detail, runner }) => `${runner.environment}: ${detail}`).join(" / ")
+        };
+  }
+
+  async run(code: string): Promise<RunResult> {
+    const skipped: string[] = [];
+    for (const runner of this.#runners) {
+      let status: RunnerAvailability;
+      try {
+        status = await runner.availability();
+      } catch (error) {
+        skipped.push(`${runner.environment}: ${error instanceof Error ? error.message : String(error)}`);
+        continue;
+      }
+      if (!status.available) {
+        skipped.push(`${runner.environment}: ${status.detail}`);
+        continue;
+      }
+      try {
+        const result = await runner.run(code);
+        return {
+          ...result,
+          environment: result.environment ?? runner.environment,
+          provider: result.provider ?? runner.environment
+        };
+      } catch (error) {
+        if (error instanceof ProviderUnavailableError && error.executionState === "not-started") {
+          skipped.push(`${runner.environment}: ${error.message}`);
+          continue;
+        }
+        throw error;
+      }
+    }
+    throw new ProviderUnavailableError(
+      `실행 가능한 provider가 없습니다. ${skipped.join(" / ")}`,
+      "not-started"
+    );
+  }
+
+  dispose(): void {
+    for (const runner of this.#runners) runner.dispose?.();
+  }
+}

@@ -206,7 +206,8 @@
 }
 
 .rcb__editor .cm-scroller {
-  max-height: 420px;
+  /* 100 source lines + the two numbered editing lines, including 16px content padding. */
+  max-height: var(--rcb-editor-max-height, calc(102lh + 16px));
   overflow: auto;
 }
 
@@ -292,6 +293,24 @@
   padding: 9px 12px 11px;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.rcb__preview {
+  background: #ffffff;
+  border-top: 1px solid var(--rcb-border);
+  min-height: 220px;
+}
+
+.rcb__preview-frame {
+  background: #ffffff;
+  border: 0;
+  display: block;
+  height: 360px;
+  width: 100%;
+}
+
+.rcb[data-language="dart"] .rcb__preview-frame {
+  height: 520px;
 }
 
 .rcb__notice {

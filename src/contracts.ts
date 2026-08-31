@@ -1,6 +1,6 @@
 export const RUNNABLE_PREFIX = "run-";
 
-export type RunnerEnvironment = "browser" | "local";
+export type RunnerEnvironment = "browser" | "local" | "remote";
 
 export interface RunnerAvailability {
   available: boolean;
@@ -9,9 +9,19 @@ export interface RunnerAvailability {
 
 export interface RunResult {
   durationMs: number;
+  environment?: RunnerEnvironment;
   exitCode: number;
+  provider?: string;
+  preview?: RunPreview;
   stderr: string;
   stdout: string;
+}
+
+export interface RunPreview {
+  html?: string;
+  kind: "html" | "remote-iframe";
+  postMessage?: unknown;
+  src?: string;
 }
 
 export interface CodeRunner {
@@ -40,4 +50,3 @@ export function fenceForLanguage(language: string): string {
   if (parsed === null) throw new Error(`Invalid runnable language: ${language}`);
   return `${RUNNABLE_PREFIX}${parsed}`;
 }
-
