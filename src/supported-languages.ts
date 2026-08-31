@@ -30,7 +30,7 @@ export const SUPPORTED_LANGUAGES = [
   language("php", "PHP", "Wandbox", "Wandbox → local PHP", "wandbox", "PHP", "php"),
   language("r", "R", "Wandbox", "Wandbox → local R", "wandbox", "R", "Rscript"),
   language("scala", "Scala", "Wandbox", "Wandbox → local Scala", "wandbox", "Scala", "scala"),
-  language("dart", "Dart", "DartPad embed", "DartPad embed → local Dart", "dartpad", undefined, "dart"),
+  language("dart", "Dart", "DartPad compile → isolated frame", "DartPad compile/frame → local Dart", "dartpad", undefined, "dart"),
   language("lua", "Lua", "Wandbox", "Wandbox → local Lua", "wandbox", "Lua", "lua"),
   language("shell", "Shell", "Wandbox", "Wandbox → local shell", "wandbox", "Bash script", "/bin/sh")
 ] as const satisfies readonly SupportedLanguage[];

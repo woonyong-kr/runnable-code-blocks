@@ -37,13 +37,13 @@ This conservative boundary prevents a remote timeout, lost connection, or ambigu
 | `wandbox-runner.ts` | JavaScript, TypeScript, Python, SQL, Java, C, C++, Go, Rust, C#, Ruby, PHP, R, Scala, Lua, Shell | Source sent to `wandbox.org` |
 | `kotlin-playground-runner.ts` | Kotlin | Source sent to `api.kotlinlang.org` |
 | `swiftfiddle-runner.ts` | Swift | Source sent to `runner.swift-playground.com` |
-| `dartpad-runner.ts` | Dart | Official `dartpad.dev` embed receives source |
+| `dartpad-runner.ts` | Dart | `stable.api.dartpad.dev` compiles source; returned JavaScript runs in a temporary sandboxed `dartpad.dev/frame.html` |
 | `javascript-runner.ts` | JavaScript | Fresh local Web Worker |
 | `typescript-runner.ts` | TypeScript | Bundled TypeScript transpiler → fresh Web Worker |
 | `browser-preview-runner.ts` | HTML, CSS | Sandboxed iframe with restrictive CSP |
 | `local-language-runner.ts` | 18 locally executable languages | Existing executable, private temporary workspace |
 
-External providers are public services, not project infrastructure. They may change endpoints, compiler names, CORS, limits, or availability without a release from this project. They provide convenience execution, not an uptime guarantee.
+External providers are public services, not project infrastructure. They may change endpoints, compiler names, CORS, limits, or availability without a release from this project. They provide convenience execution, not an uptime guarantee. DartPad's old arbitrary-code embed protocol is not used; its supported compile API and execution frame are separate adapter steps.
 
 ## Local runtime collision policy
 

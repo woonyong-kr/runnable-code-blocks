@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- Replace the retired arbitrary-code DartPad embed route with the supported DartPad compile API and a temporary sandboxed execution frame.
+- Wait for synchronous and asynchronous Dart `main()` completion before reporting output, including the conventional `List<String>` argument form.
+
 ## 0.2.0
 
 - Expand the stable Markdown contract to 21 exact languages with IntelliJ-style syntax modes and generated examples.

@@ -1,8 +1,8 @@
-# Design QA · 0.2.0
+# Design QA · 0.2.1
 
 ## Reference and scope
 
-The product keeps the compact IntelliJ New UI-inspired editor and tool-window hierarchy established by the 0.1 series. Version 0.2.0 applies that same component to the complete 21-language catalog and makes the active execution boundary visible.
+The product keeps the compact IntelliJ New UI-inspired editor and tool-window hierarchy established by the 0.1 series. Version 0.2.1 applies that same component to the complete 21-language catalog and makes the active execution boundary visible.
 
 No raster assets or machine-local reference paths are part of the repository. The stable visual contract is documented in `docs/design-system.md`; the runtime contract is documented in `docs/runtime-providers.md`.
 
@@ -15,7 +15,7 @@ No raster assets or machine-local reference paths are part of the repository. Th
   - 100 source lines plus two numbered editing lines: `clientHeight = scrollHeight = 2070px`.
   - 101 source lines plus two numbered editing lines: `clientHeight = 2070px`, `scrollHeight = 2090px`.
   - Therefore page height grows without an editor scrollbar through source line 100; internal scrolling starts at source line 101.
-- Browser UI runs returned expected output for JavaScript, TypeScript, Python, Kotlin, Java, C, C++, C#, and Swift. HTML and CSS produced sandboxed previews; Dart produced the official embed.
+- Browser UI runs returned expected output for JavaScript, TypeScript, Python, Kotlin, Java, C, C++, C#, Swift, and Dart. Dart evidence included synchronous output, a delayed asynchronous `main()`, and `main(List<String>)`; HTML and CSS produced sandboxed previews.
 - Local smoke used only existing executables and passed JavaScript, Python, SQL, Kotlin, Java, C, C++, Go, Rust, C#, Swift, Ruby, and Shell. PHP, R, Scala, Dart, and Lua were correctly reported unavailable without installation.
 
 ## Provider-dependent evidence
@@ -28,7 +28,7 @@ Earlier focused remote smoke runs returned the expected output for every non-pre
 - Source editors retain line numbers and two real trailing editing lines; those display-only lines are removed before execution and are never persisted to Markdown.
 - Empty Output and Reset controls remain hidden until relevant.
 - The toolbar switches its environment label to the provider that actually completed a fallback run.
-- HTML/CSS and Dart previews stay inside their Output region instead of creating an unrelated page surface.
+- HTML/CSS previews stay inside their Output region instead of creating an unrelated page surface. Dart uses a hidden sandboxed execution frame and returns stdout to the normal Output region.
 - The complete language list and test blocks are generated from the same source catalog and examples used by the adapters.
 
 ## Result

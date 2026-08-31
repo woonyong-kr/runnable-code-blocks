@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DartPadRunner } from "../src/runners/dartpad-runner";
+import {
+  DartPadFrameExecutor,
+  DartPadRunner,
+  decorateDartJavaScript,
+  type DartFrameExecutor
+} from "../src/runners/dartpad-runner";
+import { DART_DONE_MARKER, DART_ERROR_MARKER, instrumentDartSource } from "../src/runners/dart-source-instrumentation";
 import { KotlinPlaygroundRunner } from "../src/runners/kotlin-playground-runner";
-import { ProviderUnavailableError } from "../src/runners/provider-errors";
 import { SwiftFiddleRunner } from "../src/runners/swiftfiddle-runner";
 import { resetWandboxCompilerCache, WandboxRunner } from "../src/runners/wandbox-runner";
 
@@ -185,31 +190,178 @@ describe("KotlinPlaygroundRunner adapter", () => {
 });
 
 describe("DartPadRunner adapter", () => {
-  it("returns an injectable official DartPad embed", async () => {
-    const runner = new DartPadRunner({ fetch: vi.fn().mockResolvedValue(json({ dartVersion: "3.13.2" })) as typeof fetch });
+  it("compiles with DartPad and executes the JavaScript in an isolated frame", async () => {
+    const execute = vi.fn(async () => ({
+      durationMs: 8,
+      exitCode: 0,
+      stderr: "",
+      stdout: "dart-ok"
+    }));
+    const executor: DartFrameExecutor = { execute };
+    const fetch_ = vi.fn()
+      .mockResolvedValueOnce(json({ dartVersion: "3.13.2" }))
+      .mockResolvedValueOnce(json({ result: "compiled-dart-javascript" }));
+    const runner = new DartPadRunner({ executor, fetch: fetch_ as typeof fetch });
     await expect(runner.availability()).resolves.toMatchObject({ available: true });
-    await expect(runner.run("void main() {}")) .resolves.toMatchObject({
-      provider: "DartPad · 3.13.2",
-      preview: {
-        kind: "remote-iframe",
-        postMessage: { sourceCode: "void main() {}", type: "sourceCode" }
-      }
+    await expect(runner.run('void main() { print("dart-ok"); }')).resolves.toMatchObject({
+      exitCode: 0,
+      provider: "DartPad · 3.13.2 → isolated frame",
+      stdout: "dart-ok"
+    });
+    expect(execute).toHaveBeenCalledWith("compiled-dart-javascript", 15_000);
+    expect(JSON.parse(String(fetch_.mock.calls[1]?.[1]?.body))).toEqual({
+      deltaDill: null,
+      source: instrumentDartSource('void main() { print("dart-ok"); }')
     });
   });
 
-  it("requires preflight DOM support", async () => {
+  it("requires DOM support when no frame executor is injected", async () => {
     const original = globalThis.document;
     vi.stubGlobal("document", undefined);
-    await expect(new DartPadRunner().run("void main() {}"))
-      .rejects.toBeInstanceOf(ProviderUnavailableError);
+    await expect(new DartPadRunner().availability()).resolves.toMatchObject({ available: false });
     vi.stubGlobal("document", original);
   });
 
-  it("reports DartPad HTTP and network failures", async () => {
+  it("returns compiler diagnostics without starting a frame", async () => {
+    const execute = vi.fn();
+    const fetch_ = vi.fn()
+      .mockResolvedValueOnce(json({ dartVersion: "3.13.2" }))
+      .mockResolvedValueOnce(new Response("main.dart: syntax error", { status: 400 }));
+    const runner = new DartPadRunner({ executor: { execute }, fetch: fetch_ as typeof fetch });
+    await runner.availability();
+    await expect(runner.run("void main( {")).resolves.toMatchObject({
+      exitCode: 1,
+      stderr: "main.dart: syntax error"
+    });
+    expect(execute).not.toHaveBeenCalled();
+  });
+
+  it("reports preflight and compile transport failures as not started", async () => {
     const rejected = new DartPadRunner({ fetch: vi.fn().mockResolvedValue(new Response("no", { status: 503 })) as typeof fetch });
     await expect(rejected.availability()).resolves.toMatchObject({ available: false });
     const offline = new DartPadRunner({ fetch: vi.fn().mockRejectedValue(new Error("offline")) as typeof fetch });
     await expect(offline.availability()).resolves.toMatchObject({ available: false });
+
+    const fetch_ = vi.fn()
+      .mockResolvedValueOnce(json({ dartVersion: "3.13.2" }))
+      .mockRejectedValueOnce(new Error("compile offline"));
+    const compileOffline = new DartPadRunner({
+      executor: { execute: vi.fn() },
+      fetch: fetch_ as typeof fetch
+    });
+    await compileOffline.availability();
+    await expect(compileOffline.run("void main() {}"))
+      .rejects.toEqual(expect.objectContaining({ executionState: "not-started" }));
+  });
+
+  it("decorates compiled DDC output with isolated stdout and completion messages", () => {
+    const decorated = decorateDartJavaScript("compiled-body");
+    expect(decorated).toContain("compiled-body");
+    expect(decorated).toContain(DART_DONE_MARKER);
+    expect(decorated).toContain(DART_ERROR_MARKER);
+    expect(decorated).toContain("stable.api.dartpad.dev/artifacts/");
+    expect(decorated).toContain('type: "rcb-done"');
+    expect(decorated).toContain("dartDevEmbedder.runMain");
+  });
+});
+
+describe("instrumentDartSource", () => {
+  it("renames a top-level main and emits completion from an async wrapper", () => {
+    const source = instrumentDartSource(`
+Future<void> main() async {
+  await Future<void>.delayed(const Duration(milliseconds: 10));
+}`);
+    expect(source).toContain("Future<void> __rcbUserMain() async");
+    expect(source).toContain("Function.apply(__rcbUserMain, const <dynamic>[])");
+    expect(source).toContain(`print('${DART_DONE_MARKER}')`);
+  });
+
+  it("passes an empty argument list to the conventional List<String> main parameter", () => {
+    const source = instrumentDartSource("void main(List<String> args) => print(args.length);");
+    expect(source).toContain("Function.apply(__rcbUserMain, const <dynamic>[<String>[]])");
+  });
+
+  it("ignores main-shaped text in comments, strings, and class bodies", () => {
+    const source = instrumentDartSource(`
+// void main() {}
+const example = 'void main() {}';
+class Example { void main() {} }
+void main() => print('ok');`);
+    expect(source).toContain("class Example { void main() {} }");
+    expect(source).toContain("void __rcbUserMain() => print('ok');");
+  });
+
+  it("leaves source without a top-level main unchanged", () => {
+    const source = "class Example { void main() {} }";
+    expect(instrumentDartSource(source)).toBe(source);
+  });
+});
+
+describe("DartPadFrameExecutor", () => {
+  it("collects stdout from the isolated frame until its completion message", async () => {
+    const executor = new DartPadFrameExecutor("about:blank");
+    const pending = executor.execute("compiled-body", 1_000);
+    const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Isolated Dart execution frame"]');
+    expect(frame).not.toBeNull();
+    const postMessage = vi.spyOn(frame?.contentWindow as Window, "postMessage").mockImplementation(() => undefined);
+    const send = (data: Record<string, unknown>) => window.dispatchEvent(new MessageEvent("message", {
+      data: { sender: "frame", ...data },
+      origin: "null",
+      source: frame?.contentWindow
+    }));
+
+    send({ type: "ready" });
+    send({ message: "dart-ok", type: "stdout" });
+    send({ type: "rcb-done" });
+
+    await expect(pending).resolves.toMatchObject({ exitCode: 0, stderr: "", stdout: "dart-ok" });
+    expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({ command: "execute" }), "*");
+    expect(frame?.isConnected).toBe(false);
+  });
+
+  it("reports stderr from an executed frame", async () => {
+    const executor = new DartPadFrameExecutor("about:blank");
+    const pending = executor.execute("compiled-body", 1_000);
+    const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Isolated Dart execution frame"]');
+    vi.spyOn(frame?.contentWindow as Window, "postMessage").mockImplementation(() => undefined);
+    const send = (data: Record<string, unknown>) => window.dispatchEvent(new MessageEvent("message", {
+      data: { sender: "frame", ...data },
+      origin: "null",
+      source: frame?.contentWindow
+    }));
+    send({ type: "ready" });
+    send({ message: "dart failure", type: "jserr" });
+    send({ type: "rcb-done" });
+
+    await expect(pending).resolves.toMatchObject({ exitCode: 1, stderr: "dart failure" });
+  });
+
+  it("allows fallback when the frame never becomes ready", async () => {
+    vi.useFakeTimers();
+    const pending = new DartPadFrameExecutor("about:blank").execute("compiled-body", 50);
+    const assertion = expect(pending).rejects.toMatchObject({ executionState: "not-started" });
+    await vi.advanceTimersByTimeAsync(50);
+    await assertion;
+    vi.useRealTimers();
+  });
+
+  it("returns a timeout result instead of falling back after execution starts", async () => {
+    vi.useFakeTimers();
+    const pending = new DartPadFrameExecutor("about:blank").execute("compiled-body", 50);
+    const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Isolated Dart execution frame"]');
+    vi.spyOn(frame?.contentWindow as Window, "postMessage").mockImplementation(() => undefined);
+    window.dispatchEvent(new MessageEvent("message", {
+      data: { sender: "frame", type: "ready" },
+      origin: "null",
+      source: frame?.contentWindow
+    }));
+    await vi.advanceTimersByTimeAsync(50);
+
+    await expect(pending).resolves.toMatchObject({
+      exitCode: 124,
+      stderr: expect.stringContaining("exceeded")
+    });
+    vi.useRealTimers();
   });
 });
 

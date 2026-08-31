@@ -20,7 +20,7 @@ The editor is not persisted: reload restores the Markdown source. It grows throu
 
 ## Supported languages
 
-Version 0.2.0 defines 21 stable fences. “Remote” means the source is sent to the named provider; no execution server is operated by this project.
+Version 0.2.1 defines 21 stable fences. “Remote” means the source is sent to the named provider; no execution server is operated by this project.
 
 | Fence | Static web default | Obsidian Desktop fallback |
 | --- | --- | --- |
@@ -42,7 +42,7 @@ Version 0.2.0 defines 21 stable fences. “Remote” means the source is sent to
 | `run-php` | Wandbox | local `php` |
 | `run-r` | Wandbox | local `Rscript` |
 | `run-scala` | Wandbox | local `scala` |
-| `run-dart` | DartPad embed | local `dart` |
+| `run-dart` | DartPad compile API → isolated frame | local `dart` |
 | `run-lua` | Wandbox | local `lua` |
 | `run-shell` | Wandbox | local `/bin/sh` |
 
@@ -56,7 +56,7 @@ Code runs only after **Run** or <kbd>⌘/Ctrl</kbd> + <kbd>Enter</kbd>. Treat ev
 
 - Browser JavaScript and transpiled TypeScript use a fresh Web Worker with network globals and dynamic imports blocked, a timeout, and termination after every run.
 - HTML/CSS use an iframe without same-origin or top-navigation permission and with a restrictive CSP.
-- Remote adapters send source to Wandbox, Kotlin Playground, SwiftFiddle, or DartPad. Provider availability and limits are outside this project's control.
+- Remote adapters send source to Wandbox, Kotlin Playground, SwiftFiddle, or DartPad. DartPad compiles but does not execute source on its server; the returned JavaScript runs in a temporary sandboxed frame. Provider availability and limits are outside this project's control.
 - Local adapters are Obsidian Desktop only. They run in a private temporary directory, cap output, enforce timeouts, avoid shell interpolation, and remove the directory afterward. They are process isolation, not an OS sandbox.
 - The plugin never installs runtimes and PATH is never modified. Existing language installations remain owner-controlled. Optional executable overrides are exact paths stored in plugin settings.
 

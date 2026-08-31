@@ -309,10 +309,6 @@
   width: 100%;
 }
 
-.rcb[data-language="dart"] .rcb__preview-frame {
-  height: 520px;
-}
-
 .rcb__notice {
   background: color-mix(in srgb, var(--rcb-error) 8%, transparent);
   border-top: 1px solid color-mix(in srgb, var(--rcb-error) 22%, var(--rcb-border));

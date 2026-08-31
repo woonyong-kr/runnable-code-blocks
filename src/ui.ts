@@ -211,32 +211,10 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
 function renderPreview(host: HTMLElement, preview: NonNullable<RunResult["preview"]>): () => void {
   const frame = document.createElement("iframe");
   frame.className = "rcb__preview-frame";
-  frame.setAttribute("sandbox", preview.kind === "html"
-    ? "allow-scripts"
-    : "allow-scripts allow-forms allow-modals allow-popups allow-downloads");
-  frame.setAttribute("title", preview.kind === "html" ? "Code preview" : "Remote code runner");
-  if (preview.html !== undefined) frame.srcdoc = preview.html;
-  if (preview.src !== undefined) frame.src = preview.src;
-  if (preview.postMessage !== undefined) {
-    const inject = () => frame.contentWindow?.postMessage(preview.postMessage, "*");
-    frame.addEventListener("load", inject);
-    const onMessage = (event: MessageEvent) => {
-      if (event.source === frame.contentWindow && isReadyMessage(event.data)) inject();
-    };
-    window.addEventListener("message", onMessage);
-    host.replaceChildren(frame);
-    host.hidden = false;
-    return () => {
-      frame.removeEventListener("load", inject);
-      window.removeEventListener("message", onMessage);
-    };
-  }
+  frame.setAttribute("sandbox", "allow-scripts");
+  frame.setAttribute("title", "Code preview");
+  frame.srcdoc = preview.html;
   host.replaceChildren(frame);
   host.hidden = false;
   return () => undefined;
-}
-
-function isReadyMessage(value: unknown): boolean {
-  return typeof value === "object" && value !== null && "type" in value
-    && (value as { type?: unknown }).type === "ready";
 }

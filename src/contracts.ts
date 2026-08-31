@@ -18,10 +18,8 @@ export interface RunResult {
 }
 
 export interface RunPreview {
-  html?: string;
-  kind: "html" | "remote-iframe";
-  postMessage?: unknown;
-  src?: string;
+  html: string;
+  kind: "html";
 }
 
 export interface CodeRunner {
