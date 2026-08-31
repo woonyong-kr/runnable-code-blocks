@@ -26,6 +26,12 @@ describe("runnable block UI", () => {
     });
     await Promise.resolve();
     const content = host.querySelector<HTMLElement>(".cm-content");
+    expect(content?.hasAttribute("aria-label")).toBe(false);
+    const labelledBy = content?.getAttribute("aria-labelledby");
+    expect(labelledBy).toBeTruthy();
+    expect(document.getElementById(labelledBy ?? "")?.textContent).toBe(
+      "javascript runnable code editor"
+    );
     content?.dispatchEvent(new InputEvent("beforeinput", { data: "changed", inputType: "insertText" }));
     host.querySelector<HTMLButtonElement>(".rcb__button--run")?.click();
     await Promise.resolve();

@@ -26,6 +26,8 @@ export interface RunnableEditor {
   setValue(value: string): void;
 }
 
+let editorLabelSequence = 0;
+
 function languageExtension(language: string) {
   if (language === "javascript") return javascript();
   if (language === "kotlin") return StreamLanguage.define(kotlin);
@@ -39,6 +41,12 @@ export function createRunnableEditor(
   onRun: () => void,
   onChange?: (value: string) => void
 ): RunnableEditor {
+  const accessibleLabel = document.createElement("span");
+  accessibleLabel.className = "rcb__sr-only";
+  accessibleLabel.id = `rcb-editor-label-${String(++editorLabelSequence)}`;
+  accessibleLabel.textContent = `${language} runnable code editor`;
+  parent.append(accessibleLabel);
+
   const state = EditorState.create({
     doc: initialCode,
     extensions: [
@@ -60,7 +68,7 @@ export function createRunnableEditor(
       languageExtension(language),
       EditorView.lineWrapping,
       EditorView.contentAttributes.of({
-        "aria-label": `${language} runnable code editor`,
+        "aria-labelledby": accessibleLabel.id,
         spellcheck: "false"
       }),
       EditorView.updateListener.of((update) => {
@@ -70,7 +78,10 @@ export function createRunnableEditor(
   });
   const view = new EditorView({ parent, state });
   return {
-    destroy: () => view.destroy(),
+    destroy: () => {
+      view.destroy();
+      accessibleLabel.remove();
+    },
     focus: () => view.focus(),
     getValue: () => view.state.doc.toString(),
     setValue: (value) => {

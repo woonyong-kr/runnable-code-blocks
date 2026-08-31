@@ -39,6 +39,16 @@
   display: none !important;
 }
 
+.rcb__sr-only {
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+
 .rcb__toolbar,
 .rcb__console-header {
   align-items: center;
@@ -180,7 +190,8 @@
 }
 
 .rcb__editor .cm-content {
-  padding: 7px 0 9px;
+  /* Keep roughly two empty lines visible after the source without changing it. */
+  padding: 7px 0 calc(9px + 3.1em);
 }
 
 .rcb__editor .cm-gutters {
@@ -204,22 +215,22 @@
 }
 
 .rcb__console {
-  background: color-mix(in srgb, var(--rcb-bg-muted) 72%, var(--rcb-bg));
+  background: var(--rcb-bg);
   border-top: 1px solid var(--rcb-border);
 }
 
 .rcb__console-header {
   background: var(--rcb-toolbar);
-  min-height: 27px;
-  padding: 0 12px;
+  border-bottom: 1px solid var(--rcb-border);
+  min-height: 24px;
+  padding: 0 10px;
 }
 
 .rcb__console-title {
-  color: var(--rcb-text-muted);
-  font-size: 9.5px;
+  color: var(--rcb-text);
+  font-size: 10.5px;
   font-weight: var(--font-semibold, 600);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 .rcb__status {
@@ -244,8 +255,12 @@
   width: 5px;
 }
 
-.rcb__output {
-  background: transparent;
+.markdown-rendered .rcb pre.rcb__output,
+.rcb pre.rcb__output {
+  background: var(--rcb-bg);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   color: var(--rcb-text);
   font-family: var(--rcb-font-mono);
   font-size: 12px;
@@ -254,8 +269,9 @@
   max-height: 220px;
   min-height: 0;
   overflow: auto;
-  padding: 0 12px 11px;
+  padding: 9px 12px 11px;
   white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .rcb__notice {
