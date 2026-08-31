@@ -20,7 +20,7 @@ The editor is not persisted: reload restores the Markdown source. It grows throu
 
 ## Supported languages
 
-Version 0.2.2 defines 21 stable fences. “Remote” means the source is sent to the named provider; no execution server is operated by this project.
+Version 0.2.3 defines 21 stable fences. “Remote” means the source is sent to the named provider; no execution server is operated by this project.
 
 | Fence | Static web default | Obsidian Desktop fallback |
 | --- | --- | --- |

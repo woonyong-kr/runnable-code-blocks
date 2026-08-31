@@ -122,10 +122,10 @@ export class DartPadFrameExecutor implements DartFrameExecutor {
     }
     const started = performance.now();
     const frame = document.createElement("iframe");
+    frame.className = "rcb__dart-execution-frame";
     frame.title = "Isolated Dart execution frame";
     frame.setAttribute("aria-hidden", "true");
     frame.setAttribute("sandbox", "allow-scripts");
-    frame.style.cssText = "border:0;height:0;left:-10000px;position:fixed;top:-10000px;width:0";
     frame.src = this.#frameUrl;
 
     return await new Promise<DartFrameExecution>((resolve, reject) => {

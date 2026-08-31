@@ -1,7 +1,7 @@
 {
   "id": "runnable-code-blocks",
   "name": "Runnable Code Blocks",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "minAppVersion": "1.13.0",
   "description": "Edit and run 21 Markdown code-block languages through browser, remote, or local adapters.",
   "author": "Woonyong Choi",

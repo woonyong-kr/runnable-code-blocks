@@ -73,6 +73,7 @@ if (!source.includes("parseRunnableFence")) errors.push("shared runnable fence p
 if (!source.includes("new Worker")) errors.push("browser worker runner is missing");
 if (!source.includes("mkdtemp(join(tmpdir(),")) errors.push("local runners do not use a private temporary workspace");
 if (!source.includes("shell: false")) errors.push("local command execution must bypass a shell");
+if (/\.style\.cssText\s*=/u.test(source)) errors.push("runtime source assigns static styles directly");
 if (!source.includes("executionState === \"not-started\"")) {
   errors.push("fallback must require a known not-started execution state");
 }

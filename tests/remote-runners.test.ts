@@ -303,6 +303,8 @@ describe("DartPadFrameExecutor", () => {
     const pending = executor.execute("compiled-body", 1_000);
     const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Isolated Dart execution frame"]');
     expect(frame).not.toBeNull();
+    expect(frame?.className).toBe("rcb__dart-execution-frame");
+    expect(frame?.getAttribute("sandbox")).toBe("allow-scripts");
     const postMessage = vi.spyOn(frame?.contentWindow as Window, "postMessage").mockImplementation(() => undefined);
     const send = (data: Record<string, unknown>) => window.dispatchEvent(new MessageEvent("message", {
       data: { sender: "frame", ...data },

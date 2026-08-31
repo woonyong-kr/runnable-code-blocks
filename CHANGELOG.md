@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3
+
+- Move the hidden Dart execution frame's static layout from an inline style assignment to the shared stylesheet for Obsidian source-policy compliance.
+
 ## 0.2.2
 
 - Replace the bundled TypeScript compiler with Sucrase's focused browser transform, preserving isolated execution while removing obfuscation-like compiler diagnostic identifiers from release assets.
