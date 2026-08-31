@@ -1,8 +1,8 @@
-# Design QA · 0.2.1
+# Design QA · 0.2.2
 
 ## Reference and scope
 
-The product keeps the compact IntelliJ New UI-inspired editor and tool-window hierarchy established by the 0.1 series. Version 0.2.1 applies that same component to the complete 21-language catalog and makes the active execution boundary visible.
+The product keeps the compact IntelliJ New UI-inspired editor and tool-window hierarchy established by the 0.1 series. Version 0.2.2 applies that same component to the complete 21-language catalog and makes the active execution boundary visible.
 
 No raster assets or machine-local reference paths are part of the repository. The stable visual contract is documented in `docs/design-system.md`; the runtime contract is documented in `docs/runtime-providers.md`.
 

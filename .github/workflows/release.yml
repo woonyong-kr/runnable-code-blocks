@@ -8,7 +8,10 @@ on:
         required: true
 
 permissions:
+  artifact-metadata: write
+  attestations: write
   contents: write
+  id-token: write
 
 jobs:
   release:
@@ -28,6 +31,13 @@ jobs:
         env:
           REQUESTED_VERSION: ${{ inputs.version }}
         run: test "$(node -p 'require("./manifest.json").version')" = "$REQUESTED_VERSION"
+      - name: Attest release assets
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
       - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -38,4 +48,3 @@ jobs:
           --generate-notes
           --target "$GITHUB_SHA"
           main.js manifest.json styles.css
-

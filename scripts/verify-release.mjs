@@ -54,7 +54,12 @@ for (const file of ["main.js", "manifest.json", "styles.css", "dist-site/index.h
 }
 for (const file of ["main.js", "dist-site/main.js"]) {
   if ((await stat(file)).size > 5_000_000) errors.push(`${file} exceeds the reviewed 5 MB bundle ceiling`);
+  const bundle = await readFile(file, "utf8");
+  if (/_0x[0-9a-f]+/iu.test(bundle)) errors.push(`${file} contains an obfuscation-like hexadecimal identifier`);
 }
+const styles = await readFile("styles.css", "utf8");
+if (/!important/u.test(styles)) errors.push("styles.css uses !important");
+if (/\bclip-path\s*:/u.test(styles)) errors.push("styles.css uses unsupported clip-path");
 for (const language of supportedLanguages) {
   if (!readme.includes(`run-${language}`)) errors.push(`README does not document run-${language}`);
   if (!sourceByFile.get("src/supported-languages.ts")?.includes(`language("${language}"`)) {

@@ -1,6 +1,6 @@
 {
   "name": "runnable-code-blocks",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Environment-adapted runnable Markdown code blocks for Obsidian and static websites.",
   "main": "main.js",
   "type": "module",
@@ -47,17 +47,18 @@
     "@codemirror/legacy-modes": "^6.5.1",
     "@codemirror/state": "6.5.0",
     "@codemirror/view": "^6.38.6",
-    "@lezer/highlight": "^1.2.3",
     "@eslint/js": "^10.0.1",
+    "@lezer/highlight": "^1.2.3",
     "@types/node": "^22.18.0",
     "@vitest/coverage-v8": "^4.1.11",
     "esbuild": "^0.25.9",
     "eslint": "^10.0.1",
     "happy-dom": "^20.11.6",
     "obsidian": "^1.13.1",
+    "sucrase": "^3.35.1",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.42.0",
-    "tsx": "^4.20.5",
     "vitest": "^4.1.11"
   }
 }

@@ -1,4 +1,4 @@
-import ts from "typescript";
+import { getVersion, transform } from "sucrase";
 import type { CodeRunner, RunResult } from "../contracts";
 import { BrowserJavaScriptRunner } from "./javascript-runner";
 
@@ -17,33 +17,30 @@ export class BrowserTypeScriptRunner implements CodeRunner {
 
   async run(code: string): Promise<RunResult> {
     const started = performance.now();
-    const transpiled = ts.transpileModule(code, {
-      compilerOptions: {
-        module: ts.ModuleKind.None,
-        target: ts.ScriptTarget.ES2022,
-        strict: true
-      },
-      reportDiagnostics: true
-    });
-    const errors = (transpiled.diagnostics ?? [])
-      .filter((diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error)
-      .map((diagnostic) => ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n"));
-    if (errors.length > 0) {
+    const provider = `Sucrase ${getVersion()} → Web Worker`;
+    let javascript: string;
+    try {
+      javascript = transform(code, {
+        disableESTransforms: true,
+        production: true,
+        transforms: ["typescript"]
+      }).code;
+    } catch (error) {
       return {
         durationMs: performance.now() - started,
         environment: "browser",
         exitCode: 1,
-        provider: `TypeScript ${ts.version} → Web Worker`,
-        stderr: errors.join("\n"),
+        provider,
+        stderr: error instanceof Error ? error.message : String(error),
         stdout: ""
       };
     }
-    const result = await this.#javascript.run(transpiled.outputText);
+    const result = await this.#javascript.run(javascript);
     return {
       ...result,
       durationMs: performance.now() - started,
       environment: "browser",
-      provider: `TypeScript ${ts.version} → Web Worker`
+      provider
     };
   }
 }

@@ -32,12 +32,12 @@ describe("browser adapters", () => {
     await expect(runner.availability()).resolves.toMatchObject({ available: true });
     await expect(runner.run("const value: number = 4; console.log(value);")).resolves.toMatchObject({
       exitCode: 0,
-      provider: expect.stringContaining("TypeScript")
+      provider: expect.stringContaining("Sucrase")
     });
     expect(run).toHaveBeenCalledWith(expect.not.stringContaining(": number"));
   });
 
-  it("returns TypeScript syntax diagnostics without starting JavaScript", async () => {
+  it("returns TypeScript transform errors without starting JavaScript", async () => {
     const run = vi.fn();
     const javascript = {
       availability: async () => ({ available: true, detail: "ready" }),

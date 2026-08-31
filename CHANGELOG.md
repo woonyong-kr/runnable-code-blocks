@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.2
+
+- Replace the bundled TypeScript compiler with Sucrase's focused browser transform, preserving isolated execution while removing obfuscation-like compiler diagnostic identifiers from release assets.
+- Remove the Community Directory CSS compatibility warnings for `!important` and `clip-path`.
+- Generate GitHub build-provenance attestations for all three Obsidian release assets.
+
 ## 0.2.1
 
 - Replace the retired arbitrary-code DartPad embed route with the supported DartPad compile API and a temporary sandboxed execution frame.
