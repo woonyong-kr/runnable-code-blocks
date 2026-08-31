@@ -1,6 +1,6 @@
 export const RUNNABLE_PREFIX = "run-";
 
-export type RunnerEnvironment = "browser" | "local" | "remote";
+export type RunnerEnvironment = "browser" | "remote";
 
 export interface RunnerAvailability {
   available: boolean;

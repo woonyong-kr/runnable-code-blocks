@@ -25,7 +25,6 @@ const requiredAdapters = [
   "src/runners/fallback-runner.ts",
   "src/runners/javascript-runner.ts",
   "src/runners/kotlin-playground-runner.ts",
-  "src/runners/local-language-runner.ts",
   "src/runners/swiftfiddle-runner.ts",
   "src/runners/typescript-runner.ts",
   "src/runners/wandbox-runner.ts"
@@ -45,7 +44,7 @@ if (manifest.id !== "runnable-code-blocks") errors.push("unexpected manifest id"
 if (packageJson.name !== manifest.id) errors.push("manifest and package names differ");
 if (packageJson.version !== manifest.version) errors.push("manifest and package versions differ");
 if (versions[manifest.version] !== manifest.minAppVersion) errors.push("versions.json does not match manifest");
-if (manifest.isDesktopOnly !== true) errors.push("local process runners require a desktop-only plugin");
+if (manifest.isDesktopOnly !== false) errors.push("browser/remote-only plugin must remain available beyond desktop");
 if (!packageJson.repository?.url?.endsWith("woonyong-kr/runnable-code-blocks.git")) {
   errors.push("package repository is not the approved source");
 }
@@ -71,13 +70,14 @@ for (const file of requiredAdapters) {
 }
 if (!source.includes("parseRunnableFence")) errors.push("shared runnable fence parser is missing");
 if (!source.includes("new Worker")) errors.push("browser worker runner is missing");
-if (!source.includes("mkdtemp(join(tmpdir(),")) errors.push("local runners do not use a private temporary workspace");
-if (!source.includes("shell: false")) errors.push("local command execution must bypass a shell");
+if (/from\s+["']node:(?:child_process|fs|fs\/promises)["']/u.test(source)) {
+  errors.push("runtime source must not access the filesystem or spawn local processes");
+}
 if (/\.style\.cssText\s*=/u.test(source)) errors.push("runtime source assigns static styles directly");
 if (!source.includes("executionState === \"not-started\"")) {
   errors.push("fallback must require a known not-started execution state");
 }
-if (!readme.includes("PATH is never modified")) errors.push("runtime collision policy is not documented");
+if (!readme.includes("does not access the filesystem")) errors.push("Community runtime boundary is not documented");
 const discoveredOrigins = [...source.matchAll(/https?:\/\/[A-Za-z0-9.-]+/gu)].map(([origin]) => origin);
 for (const origin of new Set(discoveredOrigins)) {
   if (!approvedOrigins.has(origin)) errors.push(`runtime source contains an unapproved network origin: ${origin}`);

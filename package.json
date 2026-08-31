@@ -1,6 +1,6 @@
 {
   "name": "runnable-code-blocks",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Environment-adapted runnable Markdown code blocks for Obsidian and static websites.",
   "main": "main.js",
   "type": "module",
@@ -9,8 +9,7 @@
     "dev": "node esbuild.config.mjs",
     "check": "tsc --noEmit && eslint src tests site && node --check scripts/verify-release.mjs",
     "test": "vitest run --coverage",
-    "smoke:kotlin": "tsx scripts/smoke-kotlin.ts",
-    "smoke:local": "tsx scripts/smoke-local.ts",
+    "smoke:kotlin": "tsx scripts/smoke-remote.ts kotlin",
     "smoke:remote": "tsx scripts/smoke-remote.ts",
     "verify:release": "node scripts/verify-release.mjs",
     "verify": "npm run check && npm test && npm run build && npm run verify:release && npm pack --dry-run"
@@ -53,6 +52,7 @@
     "@vitest/coverage-v8": "^4.1.11",
     "esbuild": "^0.25.9",
     "eslint": "^10.0.1",
+    "eslint-plugin-obsidianmd": "^0.4.2",
     "happy-dom": "^20.11.6",
     "obsidian": "^1.13.1",
     "sucrase": "^3.35.1",

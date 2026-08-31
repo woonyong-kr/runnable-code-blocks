@@ -80,7 +80,7 @@ describe("WandboxRunner adapter", () => {
       .rejects.toEqual(expect.objectContaining({ executionState: "unknown" }));
   });
 
-  it("marks a lost POST response unknown so local code is not duplicated", async () => {
+  it("marks a lost POST response unknown so code is not executed twice", async () => {
     const fetch_ = vi.fn()
       .mockResolvedValueOnce(json([{ language: "Ruby", name: "ruby-3.4.9", version: "3.4.9" }]))
       .mockRejectedValueOnce(new TypeError("network lost"));
@@ -301,7 +301,7 @@ describe("DartPadFrameExecutor", () => {
   it("collects stdout from the isolated frame until its completion message", async () => {
     const executor = new DartPadFrameExecutor("about:blank");
     const pending = executor.execute("compiled-body", 1_000);
-    const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Isolated Dart execution frame"]');
+    const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Isolated dart execution frame"]');
     expect(frame).not.toBeNull();
     expect(frame?.className).toBe("rcb__dart-execution-frame");
     expect(frame?.getAttribute("sandbox")).toBe("allow-scripts");
@@ -324,7 +324,7 @@ describe("DartPadFrameExecutor", () => {
   it("reports stderr from an executed frame", async () => {
     const executor = new DartPadFrameExecutor("about:blank");
     const pending = executor.execute("compiled-body", 1_000);
-    const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Isolated Dart execution frame"]');
+    const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Isolated dart execution frame"]');
     vi.spyOn(frame?.contentWindow as Window, "postMessage").mockImplementation(() => undefined);
     const send = (data: Record<string, unknown>) => window.dispatchEvent(new MessageEvent("message", {
       data: { sender: "frame", ...data },
@@ -350,7 +350,7 @@ describe("DartPadFrameExecutor", () => {
   it("returns a timeout result instead of falling back after execution starts", async () => {
     vi.useFakeTimers();
     const pending = new DartPadFrameExecutor("about:blank").execute("compiled-body", 50);
-    const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Isolated Dart execution frame"]');
+    const frame = document.querySelector<HTMLIFrameElement>('iframe[title="Isolated dart execution frame"]');
     vi.spyOn(frame?.contentWindow as Window, "postMessage").mockImplementation(() => undefined);
     window.dispatchEvent(new MessageEvent("message", {
       data: { sender: "frame", type: "ready" },

@@ -11,8 +11,7 @@ function fenceFromCodeElement(code: HTMLElement): string | null {
 
 export function enhanceRunnableCodeBlocks(
   root: ParentNode,
-  registry: RunnerRegistry,
-  environment: "browser" | "local" = "browser"
+  registry: RunnerRegistry
 ): MountedRunnableBlock[] {
   const mounted: MountedRunnableBlock[] = [];
   for (const code of root.querySelectorAll<HTMLElement>("pre > code")) {
@@ -21,14 +20,16 @@ export function enhanceRunnableCodeBlocks(
     if (language === null) continue;
     const pre = code.parentElement;
     if (pre === null) continue;
-    const host = document.createElement("div");
+    const parent = pre.parentElement;
+    if (parent === null) continue;
+    const host = parent.createDiv();
     pre.replaceWith(host);
     const runner =
       registry.create(language) ??
       new UnavailableRunner(
         language,
-        environment,
-        `${language} has no ${environment} runner in this build.`
+        "browser",
+        `${language} has no browser runner in this build.`
       );
     mounted.push(mountRunnableBlock(host, { code: code.textContent, language, runner }));
   }

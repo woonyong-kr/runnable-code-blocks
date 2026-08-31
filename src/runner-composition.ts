@@ -3,6 +3,7 @@ import { RunnerRegistry, UnavailableRunner } from "./runner-registry";
 import { BrowserPreviewRunner } from "./runners/browser-preview-runner";
 import { DartPadRunner } from "./runners/dartpad-runner";
 import { FallbackRunner } from "./runners/fallback-runner";
+import type { FetchLike } from "./runners/http-client";
 import { BrowserJavaScriptRunner } from "./runners/javascript-runner";
 import { KotlinPlaygroundRunner } from "./runners/kotlin-playground-runner";
 import { BrowserTypeScriptRunner } from "./runners/typescript-runner";
@@ -10,11 +11,11 @@ import { SwiftFiddleRunner } from "./runners/swiftfiddle-runner";
 import { WandboxRunner } from "./runners/wandbox-runner";
 import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "./supported-languages";
 
-export type ExecutionOrder = "private-first" | "remote-first";
+export type ExecutionOrder = "browser-first" | "remote-first";
 
 export interface RunnerCompositionOptions {
   executionOrder?: ExecutionOrder;
-  localRunner?: (language: string) => CodeRunner | null;
+  fetch?: FetchLike;
   remoteExecutionEnabled?: boolean;
 }
 
@@ -30,13 +31,11 @@ export function composeLanguageRunner(
   language: SupportedLanguage,
   options: RunnerCompositionOptions = {}
 ): CodeRunner {
-  const remote = options.remoteExecutionEnabled === false ? null : remoteRunner(language);
-  const privateRunners = browserRunners(language);
-  const local = options.localRunner?.(language.id) ?? null;
-  if (local !== null) privateRunners.push(local);
-  const ordered = options.executionOrder === "private-first"
-    ? [...privateRunners, ...(remote === null ? [] : [remote])]
-    : [...(remote === null ? [] : [remote]), ...privateRunners];
+  const remote = options.remoteExecutionEnabled === false ? null : remoteRunner(language, options.fetch);
+  const browser = browserRunners(language);
+  const ordered = options.executionOrder === "browser-first"
+    ? [...browser, ...(remote === null ? [] : [remote])]
+    : [...(remote === null ? [] : [remote]), ...browser];
   if (ordered.length === 0) {
     return new UnavailableRunner(
       language.id,
@@ -48,20 +47,20 @@ export function composeLanguageRunner(
   return ordered.length === 1 && only !== undefined ? only : new FallbackRunner(language.id, ordered);
 }
 
-function remoteRunner(language: SupportedLanguage): CodeRunner | null {
+function remoteRunner(language: SupportedLanguage, fetch_?: FetchLike): CodeRunner | null {
   switch (language.remoteAdapter) {
     case "browser-preview":
       return null;
     case "dartpad":
-      return new DartPadRunner();
+      return new DartPadRunner({ fetch: fetch_ });
     case "kotlin-playground":
-      return new KotlinPlaygroundRunner();
+      return new KotlinPlaygroundRunner({ fetch: fetch_ });
     case "swiftfiddle":
-      return new SwiftFiddleRunner();
+      return new SwiftFiddleRunner({ fetch: fetch_ });
     case "wandbox":
       return language.wandboxLanguage === undefined
         ? null
-        : new WandboxRunner({ language: language.id, remoteLanguage: language.wandboxLanguage });
+        : new WandboxRunner({ fetch: fetch_, language: language.id, remoteLanguage: language.wandboxLanguage });
   }
 }
 

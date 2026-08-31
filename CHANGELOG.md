@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4
+
+- Replace global DOM, timer, and HTTP usage with Obsidian-native and explicit browser adapters.
+- Adopt searchable declarative settings and a void-safe asynchronous Run handler.
+- Remove filesystem and child-process execution from the Community Plugin; all 21 languages now use browser-native or named remote providers without a project-owned server.
+- Add the official Obsidian ESLint rules to local verification so Community review warnings fail before release.
+
 ## 0.2.3
 
 - Move the hidden Dart execution frame's static layout from an inline style assignment to the shared stylesheet for Obsidian source-policy compliance.

@@ -10,24 +10,21 @@ export interface MountedRunnableBlock {
 }
 
 function element<K extends keyof HTMLElementTagNameMap>(
+  parent: Node,
   name: K,
   className: string,
   text?: string
 ): HTMLElementTagNameMap[K] {
-  const node = document.createElement(name);
-  node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
+  return parent.createEl(name, { cls: className, text });
 }
 
-function svgIcon(pathData: string, className: string): SVGSVGElement {
-  const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+function svgIcon(parent: Node, pathData: string, className: string): SVGSVGElement {
+  const icon = parent.createSvg("svg");
   icon.setAttribute("viewBox", "0 0 20 20");
   icon.setAttribute("aria-hidden", "true");
   icon.classList.add(className);
-  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  const path = icon.createSvg("path");
   path.setAttribute("d", pathData);
-  icon.append(path);
   return icon;
 }
 
@@ -37,7 +34,6 @@ function durationLabel(durationMs: number): string {
 }
 
 function environmentLabel(environment: RunnableBlockSpec["runner"]["environment"]): string {
-  if (environment === "local") return "Device";
   if (environment === "remote") return "Remote";
   return "Browser";
 }
@@ -60,58 +56,44 @@ function withoutTrailingDisplayLines(code: string): string {
 
 export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): MountedRunnableBlock {
   const editorInitialCode = withTrailingBlankLines(spec.code);
-  const root = element("section", "rcb");
+  host.replaceChildren();
+  const root = element(host, "section", "rcb");
   root.dataset.language = spec.language;
   root.dataset.environment = spec.runner.environment;
 
-  const toolbar = element("header", "rcb__toolbar");
-  const identity = element("div", "rcb__identity");
-  const languageIcon = element("span", "rcb__file-icon");
-  languageIcon.append(svgIcon("M7.25 5 3 10l4.25 5M12.75 5 17 10l-4.25 5", "rcb__icon"));
-  const environment = element("span", "rcb__environment");
-  const environmentName = element("span", "rcb__environment-name");
+  const toolbar = element(root, "header", "rcb__toolbar");
+  const identity = element(toolbar, "div", "rcb__identity");
+  const languageIcon = element(identity, "span", "rcb__file-icon");
+  svgIcon(languageIcon, "M7.25 5 3 10l4.25 5M12.75 5 17 10l-4.25 5", "rcb__icon");
+  element(identity, "strong", "rcb__language", spec.language);
+  const environment = element(identity, "span", "rcb__environment");
+  element(environment, "span", "rcb__environment-dot");
+  const environmentName = element(environment, "span", "rcb__environment-name");
   environmentName.textContent = environmentLabel(spec.runner.environment);
-  environment.append(
-    element("span", "rcb__environment-dot"),
-    environmentName
-  );
-  identity.append(
-    languageIcon,
-    element("strong", "rcb__language", spec.language),
-    environment
-  );
 
-  const actions = element("div", "rcb__actions");
-  const status = element("span", "rcb__status", "Checking");
-  const resetButton = element("button", "rcb__button rcb__button--secondary", "Reset");
+  const actions = element(toolbar, "div", "rcb__actions");
+  const status = element(actions, "span", "rcb__status", "Checking");
+  const resetButton = element(actions, "button", "rcb__button rcb__button--secondary", "Reset");
   resetButton.type = "button";
   resetButton.hidden = true;
-  const runButton = element("button", "rcb__button rcb__button--run");
+  const runButton = element(actions, "button", "rcb__button rcb__button--run");
   runButton.type = "button";
   runButton.title = "Run (⌘/Ctrl+Enter)";
   runButton.setAttribute("aria-label", "Run code");
-  runButton.append(
-    svgIcon("M6.5 4.75v10.5L15 10 6.5 4.75Z", "rcb__button-icon"),
-    element("span", "rcb__button-label", "Run")
-  );
-  actions.append(status, resetButton, runButton);
-  toolbar.append(identity, actions);
+  svgIcon(runButton, "M6.5 4.75v10.5L15 10 6.5 4.75Z", "rcb__button-icon");
+  element(runButton, "span", "rcb__button-label", "Run");
 
-  const editorHost = element("div", "rcb__editor");
-  const notice = element("div", "rcb__notice");
+  const editorHost = element(root, "div", "rcb__editor");
+  const notice = element(root, "div", "rcb__notice");
   notice.hidden = true;
-  const consolePanel = element("section", "rcb__console");
+  const consolePanel = element(root, "section", "rcb__console");
   consolePanel.hidden = true;
-  const consoleHeader = element("header", "rcb__console-header");
-  const consoleTitle = element("span", "rcb__console-title", "Output");
-  consoleHeader.append(consoleTitle);
-  const output = element("pre", "rcb__output", "");
+  const consoleHeader = element(consolePanel, "header", "rcb__console-header");
+  const consoleTitle = element(consoleHeader, "span", "rcb__console-title", "Output");
+  const output = element(consolePanel, "pre", "rcb__output", "");
   output.setAttribute("aria-live", "polite");
-  const preview = element("div", "rcb__preview");
+  const preview = element(consolePanel, "div", "rcb__preview");
   preview.hidden = true;
-  consolePanel.append(consoleHeader, output, preview);
-  root.append(toolbar, editorHost, notice, consolePanel);
-  host.replaceChildren(root);
 
   const lifecycle = { disposed: false };
   let running = false;
@@ -165,7 +147,7 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
     () => void run(),
     (value) => setDirty(value !== editorInitialCode)
   );
-  runButton.addEventListener("click", run);
+  runButton.addEventListener("click", () => { void run(); });
   resetButton.addEventListener("click", () => {
     if (running) return;
     editor.setValue(editorInitialCode);
@@ -209,12 +191,12 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
 }
 
 function renderPreview(host: HTMLElement, preview: NonNullable<RunResult["preview"]>): () => void {
-  const frame = document.createElement("iframe");
+  host.replaceChildren();
+  const frame = host.createEl("iframe");
   frame.className = "rcb__preview-frame";
   frame.setAttribute("sandbox", "allow-scripts");
   frame.setAttribute("title", "Code preview");
   frame.srcdoc = preview.html;
-  host.replaceChildren(frame);
   host.hidden = false;
   return () => undefined;
 }

@@ -1,8 +1,8 @@
 import { MarkdownRenderChild, Plugin } from "obsidian";
 import { fenceForLanguage } from "./contracts";
+import { obsidianFetch } from "./obsidian-fetch";
 import { createRunnerRegistry } from "./runner-composition";
 import type { RunnerRegistry } from "./runner-registry";
-import { LOCAL_LANGUAGE_SPECS, LocalLanguageRunner } from "./runners/local-language-runner";
 import {
   DEFAULT_SETTINGS,
   RunnableCodeBlocksSettingTab,
@@ -33,12 +33,7 @@ export default class RunnableCodeBlocksPlugin extends Plugin {
     this.addSettingTab(new RunnableCodeBlocksSettingTab(this.app, this));
     const registry = createRunnerRegistry({
       executionOrder: this.settings.executionOrder,
-      localRunner: (language) => LOCAL_LANGUAGE_SPECS[language] === undefined
-        ? null
-        : new LocalLanguageRunner({
-            executableOverrides: this.settings.localExecutableOverrides,
-            language
-          }),
+      fetch: obsidianFetch,
       remoteExecutionEnabled: this.settings.remoteExecutionEnabled
     });
 
@@ -56,18 +51,10 @@ export default class RunnableCodeBlocksPlugin extends Plugin {
 
   async loadSettings(): Promise<void> {
     const stored = (await this.loadData()) as Record<string, unknown> | null;
-    const overrides = isStringRecord(stored?.localExecutableOverrides)
-      ? { ...stored.localExecutableOverrides }
-      : {};
-    if (typeof stored?.kotlinCompilerPath === "string" && stored.kotlinCompilerPath.trim()) {
-      overrides.kotlinc = stored.kotlinCompilerPath.trim();
-    }
-    if (typeof stored?.javaPath === "string" && stored.javaPath.trim()) {
-      overrides.java = stored.javaPath.trim();
-    }
     this.settings = {
-      executionOrder: stored?.executionOrder === "private-first" ? "private-first" : DEFAULT_SETTINGS.executionOrder,
-      localExecutableOverrides: overrides,
+      executionOrder: stored?.executionOrder === "browser-first" || stored?.executionOrder === "private-first"
+        ? "browser-first"
+        : DEFAULT_SETTINGS.executionOrder,
       remoteExecutionEnabled: typeof stored?.remoteExecutionEnabled === "boolean"
         ? stored.remoteExecutionEnabled
         : DEFAULT_SETTINGS.remoteExecutionEnabled
@@ -77,9 +64,4 @@ export default class RunnableCodeBlocksPlugin extends Plugin {
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
   }
-}
-
-function isStringRecord(value: unknown): value is Record<string, string> {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-    && Object.values(value).every((entry) => typeof entry === "string");
 }

@@ -174,7 +174,7 @@ export function createRunnableEditor(
     "--rcb-editor-max-height",
     `calc(${String(EDITOR_MAX_VISIBLE_LINE_COUNT)}lh + 16px)`
   );
-  const accessibleLabel = document.createElement("span");
+  const accessibleLabel = parent.createSpan();
   accessibleLabel.className = "rcb__sr-only";
   accessibleLabel.id = `rcb-editor-label-${String(++editorLabelSequence)}`;
   accessibleLabel.textContent = `${language} runnable code editor`;

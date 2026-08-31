@@ -1,27 +1,31 @@
 import { createRunnerRegistry } from "../src/runner-composition";
 import { LANGUAGE_EXAMPLES } from "../src/language-examples";
+import type { FetchLike } from "../src/runners/http-client";
 import { SUPPORTED_LANGUAGES } from "../src/supported-languages";
 import { enhanceRunnableCodeBlocks } from "../src/web-adapter";
+
+declare global {
+  interface Window {
+    rcbFetch: FetchLike;
+  }
+}
 
 const languageList = document.querySelector<HTMLElement>("[data-supported-languages]");
 const languageCount = document.querySelector<HTMLElement>("[data-supported-language-count]");
 if (languageCount !== null) languageCount.textContent = String(SUPPORTED_LANGUAGES.length);
 if (languageList !== null) {
   for (const language of SUPPORTED_LANGUAGES) {
-    const item = document.createElement("li");
+    const item = languageList.createEl("li");
     item.className = "rcb-site__language";
 
-    const identity = document.createElement("div");
-    const name = document.createElement("strong");
+    const identity = item.createDiv();
+    const name = identity.createEl("strong");
     name.textContent = language.label;
-    const fence = document.createElement("code");
+    const fence = identity.createEl("code");
     fence.textContent = language.fence;
-    identity.append(name, fence);
 
-    const environments = document.createElement("span");
+    const environments = item.createSpan();
     environments.textContent = `Obsidian · ${language.obsidian} / Web · ${language.browser}`;
-    item.append(identity, environments);
-    languageList.append(item);
   }
 }
 
@@ -30,25 +34,25 @@ if (testCases !== null) {
   for (const example of LANGUAGE_EXAMPLES) {
     const language = SUPPORTED_LANGUAGES.find(({ id }) => id === example.language);
     if (language === undefined) continue;
-    const section = document.createElement("section");
+    const section = testCases.createEl("section");
     section.className = "rcb-site__lesson";
-    const title = document.createElement("h2");
+    const title = section.createEl("h2");
     title.textContent = `${language.label} · ${language.browser}`;
-    const description = document.createElement("p");
+    const description = section.createEl("p");
     description.append("Expected · ");
-    const expected = document.createElement("code");
+    const expected = description.createEl("code");
     expected.textContent = example.expected;
-    description.append(expected);
-    const pre = document.createElement("pre");
-    const code = document.createElement("code");
+    const pre = section.createEl("pre");
+    const code = pre.createEl("code");
     code.className = `language-${language.fence}`;
     code.textContent = example.code;
-    pre.append(code);
-    section.append(title, description, pre);
-    testCases.append(section);
   }
 }
 
-const registry = createRunnerRegistry({ executionOrder: "remote-first", remoteExecutionEnabled: true });
+const registry = createRunnerRegistry({
+  executionOrder: "remote-first",
+  fetch: window.rcbFetch,
+  remoteExecutionEnabled: true
+});
 
 enhanceRunnableCodeBlocks(document, registry);

@@ -82,7 +82,7 @@ export class BrowserJavaScriptRunner implements CodeRunner {
         stdout: ""
       };
     }
-    const token = globalThis.crypto.randomUUID();
+    const token = window.crypto.randomUUID();
     const url = this.#urlFactory(new Blob([WORKER_SOURCE], { type: "text/javascript" }));
     const worker = this.#workerFactory(url);
     return await new Promise<RunResult>((resolve) => {
@@ -90,12 +90,12 @@ export class BrowserJavaScriptRunner implements CodeRunner {
       const finish = (result: RunResult) => {
         if (settled) return;
         settled = true;
-        clearTimeout(timer);
+        window.clearTimeout(timer);
         worker.terminate();
         this.#urlRevoke(url);
         resolve(result);
       };
-      const timer = setTimeout(() => {
+      const timer = window.setTimeout(() => {
         finish({
           durationMs: this.#timeoutMs,
           exitCode: 124,

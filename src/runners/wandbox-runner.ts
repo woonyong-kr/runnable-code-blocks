@@ -1,5 +1,5 @@
 import type { CodeRunner, RunResult, RunnerAvailability } from "../contracts";
-import { fetchWithTimeout, type FetchLike } from "./http-client";
+import { fetchWithTimeout, type FetchLike, unavailableFetch } from "./http-client";
 import { ProviderUnavailableError, unknownRemoteFailure } from "./provider-errors";
 
 const WANDBOX_API = "https://wandbox.org/api";
@@ -39,7 +39,7 @@ export class WandboxRunner implements CodeRunner {
   }) {
     this.language = options.language;
     this.#remoteLanguage = options.remoteLanguage;
-    this.#fetch = options.fetch ?? fetch;
+    this.#fetch = options.fetch ?? unavailableFetch;
     this.#timeoutMs = options.timeoutMs ?? 30_000;
   }
 

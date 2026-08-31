@@ -17,7 +17,7 @@ function runner(
 
 describe("FallbackRunner", () => {
   it("uses the first available provider and records its boundary", async () => {
-    const fallback = new FallbackRunner("python", [runner("remote"), runner("local")]);
+    const fallback = new FallbackRunner("python", [runner("remote"), runner("browser")]);
     await expect(fallback.availability()).resolves.toMatchObject({ available: true });
     await expect(fallback.run("print(1)")).resolves.toMatchObject({
       environment: "remote",
@@ -27,27 +27,27 @@ describe("FallbackRunner", () => {
   });
 
   it("falls back only when execution is known not to have started", async () => {
-    const localRun = vi.fn(async () => ({ durationMs: 1, exitCode: 0, stderr: "", stdout: "local" }));
+    const browserRun = vi.fn(async () => ({ durationMs: 1, exitCode: 0, stderr: "", stdout: "browser" }));
     const remote = runner("remote", {
       run: async () => { throw new ProviderUnavailableError("rate limited", "not-started"); }
     });
-    await expect(new FallbackRunner("python", [remote, runner("local", { run: localRun })]).run("code"))
-      .resolves.toMatchObject({ stdout: "local" });
-    expect(localRun).toHaveBeenCalledOnce();
+    await expect(new FallbackRunner("python", [remote, runner("browser", { run: browserRun })]).run("code"))
+      .resolves.toMatchObject({ stdout: "browser" });
+    expect(browserRun).toHaveBeenCalledOnce();
   });
 
   it("does not execute code twice after an unknown remote outcome", async () => {
-    const localRun = vi.fn();
+    const browserRun = vi.fn();
     const remote = runner("remote", {
       run: async () => { throw new ProviderUnavailableError("response lost", "unknown"); }
     });
-    await expect(new FallbackRunner("python", [remote, runner("local", { run: localRun })]).run("sideEffect()"))
+    await expect(new FallbackRunner("python", [remote, runner("browser", { run: browserRun })]).run("sideEffect()"))
       .rejects.toThrow("response lost");
-    expect(localRun).not.toHaveBeenCalled();
+    expect(browserRun).not.toHaveBeenCalled();
   });
 
   it("skips unavailable providers and reports when none can run", async () => {
-    const fallback = new FallbackRunner("python", [runner("remote", { available: false }), runner("local", { available: false })]);
+    const fallback = new FallbackRunner("python", [runner("remote", { available: false }), runner("browser", { available: false })]);
     await expect(fallback.availability()).resolves.toMatchObject({ available: false });
     await expect(fallback.run("code")).rejects.toMatchObject({ executionState: "not-started" });
   });

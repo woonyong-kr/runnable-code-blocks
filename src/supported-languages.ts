@@ -5,34 +5,33 @@ export interface SupportedLanguage {
   fence: `run-${string}`;
   id: string;
   label: string;
-  local: string | null;
   obsidian: string;
   remoteAdapter: RemoteAdapterId;
   wandboxLanguage?: string;
 }
 
 export const SUPPORTED_LANGUAGES = [
-  language("javascript", "JavaScript", "Wandbox → Web Worker", "Wandbox → Web Worker", "wandbox", "JavaScript", "node"),
+  language("javascript", "JavaScript", "Wandbox → Web Worker", "Wandbox → Web Worker", "wandbox", "JavaScript"),
   language("typescript", "TypeScript", "Wandbox → browser transpile", "Wandbox → browser transpile", "wandbox", "TypeScript"),
-  language("python", "Python", "Wandbox", "Wandbox → local Python", "wandbox", "Python", "python3 / python"),
-  language("sql", "SQL (SQLite)", "Wandbox", "Wandbox → local SQLite", "wandbox", "SQL", "sqlite3"),
+  language("python", "Python", "Wandbox", "Wandbox", "wandbox", "Python"),
+  language("sql", "SQL (SQLite)", "Wandbox", "Wandbox", "wandbox", "SQL"),
   language("html", "HTML", "Sandboxed preview iframe", "Sandboxed preview iframe", "browser-preview"),
   language("css", "CSS", "Sandboxed preview iframe", "Sandboxed preview iframe", "browser-preview"),
-  language("kotlin", "Kotlin", "Kotlin Playground", "Kotlin Playground → local kotlinc", "kotlin-playground", undefined, "kotlinc + java"),
-  language("java", "Java", "Wandbox", "Wandbox → local JDK", "wandbox", "Java", "javac + java"),
-  language("c", "C", "Wandbox", "Wandbox → local compiler", "wandbox", "C", "clang / gcc"),
-  language("cpp", "C++", "Wandbox", "Wandbox → local compiler", "wandbox", "C++", "clang++ / g++"),
-  language("go", "Go", "Wandbox", "Wandbox → local Go", "wandbox", "Go", "go"),
-  language("rust", "Rust", "Wandbox", "Wandbox → local Rust", "wandbox", "Rust", "rustc"),
-  language("csharp", "C#", "Wandbox", "Wandbox → local .NET SDK", "wandbox", "C#", "dotnet"),
-  language("swift", "Swift", "SwiftFiddle", "SwiftFiddle → local Swift", "swiftfiddle", undefined, "swift"),
-  language("ruby", "Ruby", "Wandbox", "Wandbox → local Ruby", "wandbox", "Ruby", "ruby"),
-  language("php", "PHP", "Wandbox", "Wandbox → local PHP", "wandbox", "PHP", "php"),
-  language("r", "R", "Wandbox", "Wandbox → local R", "wandbox", "R", "Rscript"),
-  language("scala", "Scala", "Wandbox", "Wandbox → local Scala", "wandbox", "Scala", "scala"),
-  language("dart", "Dart", "DartPad compile → isolated frame", "DartPad compile/frame → local Dart", "dartpad", undefined, "dart"),
-  language("lua", "Lua", "Wandbox", "Wandbox → local Lua", "wandbox", "Lua", "lua"),
-  language("shell", "Shell", "Wandbox", "Wandbox → local shell", "wandbox", "Bash script", "/bin/sh")
+  language("kotlin", "Kotlin", "Kotlin Playground", "Kotlin Playground", "kotlin-playground"),
+  language("java", "Java", "Wandbox", "Wandbox", "wandbox", "Java"),
+  language("c", "C", "Wandbox", "Wandbox", "wandbox", "C"),
+  language("cpp", "C++", "Wandbox", "Wandbox", "wandbox", "C++"),
+  language("go", "Go", "Wandbox", "Wandbox", "wandbox", "Go"),
+  language("rust", "Rust", "Wandbox", "Wandbox", "wandbox", "Rust"),
+  language("csharp", "C#", "Wandbox", "Wandbox", "wandbox", "C#"),
+  language("swift", "Swift", "SwiftFiddle", "SwiftFiddle", "swiftfiddle"),
+  language("ruby", "Ruby", "Wandbox", "Wandbox", "wandbox", "Ruby"),
+  language("php", "PHP", "Wandbox", "Wandbox", "wandbox", "PHP"),
+  language("r", "R", "Wandbox", "Wandbox", "wandbox", "R"),
+  language("scala", "Scala", "Wandbox", "Wandbox", "wandbox", "Scala"),
+  language("dart", "Dart", "DartPad compile → isolated frame", "DartPad compile → isolated frame", "dartpad"),
+  language("lua", "Lua", "Wandbox", "Wandbox", "wandbox", "Lua"),
+  language("shell", "Shell", "Wandbox", "Wandbox", "wandbox", "Bash script")
 ] as const satisfies readonly SupportedLanguage[];
 
 function language(
@@ -41,10 +40,9 @@ function language(
   browser: string,
   obsidian: string,
   remoteAdapter: RemoteAdapterId,
-  wandboxLanguage?: string,
-  local: string | null = null
+  wandboxLanguage?: string
 ): SupportedLanguage {
-  return { id, label, fence: `run-${id}`, browser, obsidian, remoteAdapter, wandboxLanguage, local };
+  return { id, label, fence: `run-${id}`, browser, obsidian, remoteAdapter, wandboxLanguage };
 }
 
 export function supportedLanguagesDescription(): string {

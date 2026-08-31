@@ -1,14 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { CodeRunner } from "../src/contracts";
 import { composeLanguageRunner, createRunnerRegistry } from "../src/runner-composition";
 import { SUPPORTED_LANGUAGES, supportedLanguage } from "../src/supported-languages";
-
-const localRunner = (language: string): CodeRunner => ({
-  environment: "local",
-  language,
-  availability: async () => ({ available: true, detail: "local" }),
-  run: async () => ({ durationMs: 1, exitCode: 0, stderr: "", stdout: "local" })
-});
 
 describe("runner composition", () => {
   it("registers every language from the declarative catalog", () => {
@@ -20,13 +12,10 @@ describe("runner composition", () => {
   });
 
   it("keeps provider order configurable without changing Markdown", async () => {
-    const python = supportedLanguage("python");
-    if (python === null) throw new Error("python missing");
-    const privateFirst = composeLanguageRunner(python, {
-      executionOrder: "private-first",
-      localRunner
-    });
-    await expect(privateFirst.run("print(1)")).resolves.toMatchObject({ environment: "local" });
+    const html = supportedLanguage("html");
+    if (html === null) throw new Error("html missing");
+    const browserFirst = composeLanguageRunner(html, { executionOrder: "browser-first" });
+    await expect(browserFirst.availability()).resolves.toMatchObject({ available: true });
   });
 
   it("provides browser-only previews even when remote execution is disabled", async () => {

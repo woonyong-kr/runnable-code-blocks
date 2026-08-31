@@ -8,14 +8,13 @@ The stable public contract is the Markdown fence `run-<language>`. Environment a
 Markdown fence
   → supported-languages catalog
   → runner-composition
-  → remote / browser / local adapter order
+  → remote / browser adapter order
   → availability preflight
   → one execution result
 ```
 
-- Static web composes remote and browser-native adapters only.
-- Obsidian Desktop adds local adapters for installed toolchains.
-- `remote-first` is the default; `private-first` and remote-off are user settings.
+- Static web and Obsidian compose the same remote and browser-native adapters.
+- `remote-first` is the default; browser-first and remote-off are user settings.
 - A compile error, runtime exception, non-zero exit, or empty stdout is a completed execution result and never triggers fallback.
 
 ## Fallback state machine
@@ -28,7 +27,7 @@ Markdown fence
 | `RunResult` with any exit code | Execution completed | No |
 | Unexpected adapter exception | Adapter contract failure | No |
 
-This conservative boundary prevents a remote timeout, lost connection, or ambiguous HTTP failure from being followed by a second local execution with the same side effects. Only authentication/path/rate-limit rejection and explicitly recognized pre-execution infrastructure rejection are classified `not-started`.
+This conservative boundary prevents a remote timeout, lost connection, or ambiguous HTTP failure from being followed by a second execution with the same side effects. Only authentication/path/rate-limit rejection and explicitly recognized pre-execution infrastructure rejection are classified `not-started`.
 
 ## Provider map
 
@@ -41,21 +40,12 @@ This conservative boundary prevents a remote timeout, lost connection, or ambigu
 | `javascript-runner.ts` | JavaScript | Fresh local Web Worker |
 | `typescript-runner.ts` | TypeScript | Bundled TypeScript transpiler → fresh Web Worker |
 | `browser-preview-runner.ts` | HTML, CSS | Sandboxed iframe with restrictive CSP |
-| `local-language-runner.ts` | 18 locally executable languages | Existing executable, private temporary workspace |
 
 External providers are public services, not project infrastructure. They may change endpoints, compiler names, CORS, limits, or availability without a release from this project. They provide convenience execution, not an uptime guarantee. DartPad's old arbitrary-code embed protocol is not used; its supported compile API and execution frame are separate adapter steps.
 
-## Local runtime collision policy
+## Community runtime boundary
 
-The plugin does not download an SDK, package manager, compiler, interpreter, or daemon. It does not mutate `PATH`, shell profiles, system files, or language caches.
-
-1. An exact executable override from plugin settings wins.
-2. Otherwise the adapter probes a short language-specific candidate list already visible to the Obsidian process.
-3. Every executable receives an argument array through `spawn(..., { shell: false })`; edited code is written to a mode-`0600` file or stdin, never interpolated into a shell command.
-4. Compilation and execution occur in a unique `runnable-code-blocks-<language>-*` directory.
-5. Output is capped, time is bounded, and the temporary directory is removed in `finally`.
-
-This avoids installation conflicts but is not a security sandbox. Trusted local code can still use the current user's filesystem, network, environment, and child-process permissions.
+The plugin does not download an SDK, package manager, compiler, interpreter, or daemon. Runtime source does not access the filesystem, spawn child processes, mutate `PATH`, or write outside the Obsidian vault. Languages without a browser-native adapter require their documented external provider.
 
 ## Adapter maintenance contract
 
@@ -67,7 +57,7 @@ Provider churn should remain a narrow patch:
 4. Run `npm run verify`, followed by the explicit provider smoke command for that language.
 5. Change `src/supported-languages.ts` only when the public support claim or adapter mapping changes.
 
-Shared UI, Markdown parsing, and local adapters must not import provider-specific request schemas. `scripts/verify-release.mjs` checks the adapter inventory, 21-fence documentation, network-origin allowlist, local no-shell/temp-workspace boundaries, bundle ceiling, and version alignment.
+Shared UI and Markdown parsing must not import provider-specific request schemas. `scripts/verify-release.mjs` checks the adapter inventory, 21-fence documentation, network-origin allowlist, forbidden runtime Node imports, bundle ceiling, and version alignment.
 
 ## Adding a language
 

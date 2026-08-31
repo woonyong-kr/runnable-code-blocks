@@ -24,6 +24,39 @@
 
       <section aria-label="All language runtime tests" data-language-test-cases></section>
     </main>
+    <script>
+      (() => {
+        const html = (parent, tag, options, callback) => {
+          const owner = parent.nodeType === Node.DOCUMENT_NODE ? parent : parent.ownerDocument;
+          const element = owner.createElement(tag);
+          const info = typeof options === "string" ? { cls: options } : options ?? {};
+          if (info.cls) element.className = Array.isArray(info.cls) ? info.cls.join(" ") : info.cls;
+          if (info.text !== undefined) element.textContent = info.text;
+          parent.append(element);
+          callback?.(element);
+          return element;
+        };
+        Node.prototype.createEl = function (tag, options, callback) {
+          return html(this, tag, options, callback);
+        };
+        Node.prototype.createDiv = function (options, callback) {
+          return html(this, "div", options, callback);
+        };
+        Node.prototype.createSpan = function (options, callback) {
+          return html(this, "span", options, callback);
+        };
+        Node.prototype.createSvg = function (tag, options, callback) {
+          const owner = this.nodeType === Node.DOCUMENT_NODE ? this : this.ownerDocument;
+          const element = owner.createElementNS("http://www.w3.org/2000/svg", tag);
+          const info = typeof options === "string" ? { cls: options } : options ?? {};
+          if (info.cls) element.setAttribute("class", Array.isArray(info.cls) ? info.cls.join(" ") : info.cls);
+          this.append(element);
+          callback?.(element);
+          return element;
+        };
+        window.rcbFetch = window.fetch.bind(window);
+      })();
+    </script>
     <script type="module" src="./main.js"></script>
   </body>
 </html>

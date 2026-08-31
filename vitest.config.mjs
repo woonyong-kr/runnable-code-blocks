@@ -8,6 +8,7 @@ export default defineConfig({
   },
   test: {
     environment: "happy-dom",
+    setupFiles: ["./tests/dom-runtime.ts"],
     coverage: {
       exclude: ["src/main.ts", "src/settings.ts", "site/main.ts"],
       include: ["src/**/*.ts"],
@@ -22,4 +23,3 @@ export default defineConfig({
     }
   }
 });
-

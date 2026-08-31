@@ -28,7 +28,7 @@ export class UnavailableRunner implements CodeRunner {
   readonly language;
   readonly #detail;
 
-  constructor(language: string, environment: "browser" | "local", detail: string) {
+  constructor(language: string, environment: "browser", detail: string) {
     this.language = language;
     this.environment = environment;
     this.#detail = detail;
@@ -42,4 +42,3 @@ export class UnavailableRunner implements CodeRunner {
     throw new Error(this.#detail);
   }
 }
-

@@ -1,5 +1,5 @@
 import type { CodeRunner, RunResult, RunnerAvailability } from "../contracts";
-import { fetchWithTimeout, type FetchLike } from "./http-client";
+import { fetchWithTimeout, type FetchLike, unavailableFetch } from "./http-client";
 import { ProviderUnavailableError, unknownRemoteFailure } from "./provider-errors";
 
 const KOTLIN_API = "https://api.kotlinlang.org";
@@ -28,7 +28,7 @@ export class KotlinPlaygroundRunner implements CodeRunner {
   #version: string | null = null;
 
   constructor(options: { fetch?: FetchLike; timeoutMs?: number } = {}) {
-    this.#fetch = options.fetch ?? fetch;
+    this.#fetch = options.fetch ?? unavailableFetch;
     this.#timeoutMs = options.timeoutMs ?? 20_000;
   }
 

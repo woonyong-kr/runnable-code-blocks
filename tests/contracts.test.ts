@@ -6,7 +6,7 @@ import {
 } from "../src/supported-languages";
 
 describe("runnable fence contract", () => {
-  it("parses the same run-language syntax used by local and web adapters", () => {
+  it("parses the same run-language syntax used by Obsidian and web adapters", () => {
     expect(parseRunnableFence("run-kotlin")).toBe("kotlin");
     expect(parseRunnableFence(" RUN-JavaScript ")).toBe("javascript");
     expect(parseRunnableFence("kotlin")).toBeNull();
@@ -27,11 +27,10 @@ describe("runnable fence contract", () => {
     ]);
     expect(SUPPORTED_LANGUAGES.every(({ fence, id }) => fence === `run-${id}`)).toBe(true);
     expect(SUPPORTED_LANGUAGES.find(({ id }) => id === "kotlin")).toMatchObject({
-      remoteAdapter: "kotlin-playground",
-      local: "kotlinc + java"
+      remoteAdapter: "kotlin-playground"
     });
     expect(SUPPORTED_LANGUAGES.filter(({ remoteAdapter }) => remoteAdapter === "wandbox")).toHaveLength(16);
     expect(supportedLanguagesDescription()).toContain("JavaScript — Obsidian: Wandbox → Web Worker");
-    expect(supportedLanguagesDescription()).toContain("Kotlin — Obsidian: Kotlin Playground → local kotlinc");
+    expect(supportedLanguagesDescription()).toContain("Kotlin — Obsidian: Kotlin Playground");
   });
 });

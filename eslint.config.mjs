@@ -1,8 +1,10 @@
 import eslint from "@eslint/js";
+import obsidianmd from "eslint-plugin-obsidianmd";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   eslint.configs.recommended,
+  ...obsidianmd.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   {
     languageOptions: {
@@ -17,9 +19,13 @@ export default tseslint.config(
   {
     files: ["tests/**/*.ts"],
     rules: {
+      "@microsoft/sdl/no-inner-html": "off",
       "@typescript-eslint/no-unsafe-assignment": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
-      "@typescript-eslint/no-unsafe-member-access": "off"
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "obsidianmd/no-global-this": "off",
+      "obsidianmd/prefer-create-el": "off",
+      "obsidianmd/prefer-instanceof": "off"
     }
   },
   {
