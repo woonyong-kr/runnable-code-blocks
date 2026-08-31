@@ -14,6 +14,15 @@
   --rcb-radius: var(--radius-s, 6px);
   --rcb-control-height: var(--input-height, 30px);
   --rcb-focus-width: var(--focus-ring-width, 2px);
+  --rcb-syntax-comment: #7a7e85;
+  --rcb-syntax-error: #bc3f3c;
+  --rcb-syntax-function: #56a8f5;
+  --rcb-syntax-identifier: #bcbec4;
+  --rcb-syntax-keyword: #cf8e6d;
+  --rcb-syntax-meta: #bbb529;
+  --rcb-syntax-number: #2aacb8;
+  --rcb-syntax-string: #6aab73;
+  --rcb-syntax-type: #c77dbb;
 }
 
 .theme-dark {
@@ -23,6 +32,18 @@
   --rcb-text: var(--text-normal, #dfe1e5);
   --rcb-text-muted: var(--text-muted, #a8adb5);
   --rcb-toolbar: var(--background-secondary-alt, #2b2d30);
+}
+
+.theme-light {
+  --rcb-syntax-comment: #8c8c8c;
+  --rcb-syntax-error: #c5221f;
+  --rcb-syntax-function: #00627a;
+  --rcb-syntax-identifier: #080808;
+  --rcb-syntax-keyword: #0033b3;
+  --rcb-syntax-meta: #9e880d;
+  --rcb-syntax-number: #1750eb;
+  --rcb-syntax-string: #067d17;
+  --rcb-syntax-type: #7a3e9d;
 }
 
 .rcb {
@@ -190,8 +211,7 @@
 }
 
 .rcb__editor .cm-content {
-  /* Keep roughly two empty lines visible after the source without changing it. */
-  padding: 7px 0 calc(9px + 3.1em);
+  padding: 7px 0 9px;
 }
 
 .rcb__editor .cm-gutters {

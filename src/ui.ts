@@ -43,7 +43,17 @@ function resultText(result: RunResult): string {
   return parts.join("\n");
 }
 
+function withTrailingBlankLines(code: string, count = 2): string {
+  const trailingNewlines = code.match(/\n*$/u)?.[0].length ?? 0;
+  return trailingNewlines >= count ? code : code + "\n".repeat(count - trailingNewlines);
+}
+
+function withoutTrailingDisplayLines(code: string): string {
+  return code.replace(/\n+$/u, "");
+}
+
 export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): MountedRunnableBlock {
+  const editorInitialCode = withTrailingBlankLines(spec.code);
   const root = element("section", "rcb");
   root.dataset.language = spec.language;
   root.dataset.environment = spec.runner.environment;
@@ -112,7 +122,7 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
     consolePanel.hidden = false;
     output.textContent = "";
     try {
-      const result = await spec.runner.run(editor.getValue());
+      const result = await spec.runner.run(withoutTrailingDisplayLines(editor.getValue()));
       if (lifecycle.disposed) return;
       root.dataset.state = result.exitCode === 0 ? "success" : "error";
       status.textContent = result.exitCode === 0 ? durationLabel(result.durationMs) : "Failed";
@@ -130,15 +140,15 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
 
   const editor: RunnableEditor = createRunnableEditor(
     editorHost,
-    spec.code,
+    editorInitialCode,
     spec.language,
     () => void run(),
-    (value) => setDirty(value !== spec.code)
+    (value) => setDirty(value !== editorInitialCode)
   );
   runButton.addEventListener("click", run);
   resetButton.addEventListener("click", () => {
     if (running) return;
-    editor.setValue(spec.code);
+    editor.setValue(editorInitialCode);
     root.dataset.state = "idle";
     status.textContent = available ? "Ready" : "Unavailable";
     status.title = availabilityDetail;

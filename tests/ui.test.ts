@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CodeRunner } from "../src/contracts";
+import { INTELLIJ_DARCULA_COLORS } from "../src/editor";
 import { mountRunnableBlock } from "../src/ui";
 
 function createRunner(overrides: Partial<CodeRunner> = {}): CodeRunner {
@@ -32,6 +33,12 @@ describe("runnable block UI", () => {
     expect(document.getElementById(labelledBy ?? "")?.textContent).toBe(
       "javascript runnable code editor"
     );
+    expect(host.querySelectorAll(".cm-line")).toHaveLength(3);
+    expect(
+      Array.from(host.querySelectorAll(".cm-lineNumbers .cm-gutterElement"), (line) => line.textContent)
+        .filter(Boolean)
+        .slice(-3)
+    ).toEqual(["1", "2", "3"]);
     content?.dispatchEvent(new InputEvent("beforeinput", { data: "changed", inputType: "insertText" }));
     host.querySelector<HTMLButtonElement>(".rcb__button--run")?.click();
     await Promise.resolve();
@@ -42,8 +49,19 @@ describe("runnable block UI", () => {
     expect(host.querySelector(".rcb__output")?.textContent).toBe("");
     expect(host.querySelector<HTMLElement>(".rcb__console")?.hidden).toBe(true);
     expect(host.querySelector<HTMLButtonElement>(".rcb__button--secondary")?.hidden).toBe(true);
+    expect(host.querySelectorAll(".cm-line")).toHaveLength(3);
     mounted.dispose();
     expect(host.querySelector(".rcb")).toBeNull();
+  });
+
+  it("uses the IntelliJ Darcula syntax palette", () => {
+    expect(INTELLIJ_DARCULA_COLORS).toMatchObject({
+      function: "#56A8F5",
+      identifier: "#BCBEC4",
+      keyword: "#CF8E6D",
+      number: "#2AACB8",
+      string: "#6AAB73"
+    });
   });
 
   it("shows runner exceptions as console errors", async () => {

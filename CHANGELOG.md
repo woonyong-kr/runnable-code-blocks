@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- Add two real, numbered blank lines to the ephemeral editor document instead of CSS-only space.
+- Match syntax highlighting to the IntelliJ Darcula palette for keywords, functions, strings, numbers, types, comments, and identifiers.
+
 ## 0.1.2
 
 - Keep roughly two empty editor lines visible after the source without changing Markdown.

@@ -18,7 +18,7 @@ console.log("Hello, JavaScript!");
 
 ## Supported languages
 
-Version 0.1.2 supports exactly two languages. It does not claim universal language support.
+Version 0.1.3 supports exactly two languages. It does not claim universal language support.
 
 | Fence | Obsidian Desktop | Static browser build | Execution boundary |
 | --- | --- | --- | --- |
@@ -29,7 +29,7 @@ No execution server, API, database, or persisted editor state is used. JavaScrip
 
 Code runs only after the user presses **Run** or <kbd>⌘/Ctrl</kbd> + <kbd>Enter</kbd>. A runnable block can execute arbitrary code with the capabilities of its runner. Only run code you trust.
 
-The runner registry can add device, browser-native, or opt-in remote providers without changing the Markdown fence. Remote execution is deliberately absent from 0.1.2 because it sends source code to a third party and most general-purpose APIs require a secret that must not be embedded in a static site. See [runtime providers](docs/runtime-providers.md).
+The runner registry can add device, browser-native, or opt-in remote providers without changing the Markdown fence. Remote execution is deliberately absent from 0.1.3 because it sends source code to a third party and most general-purpose APIs require a secret that must not be embedded in a static site. See [runtime providers](docs/runtime-providers.md).
 
 ## Local development
 

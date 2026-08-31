@@ -1,46 +1,49 @@
-# Design QA · 0.1.2
+# Design QA · 0.1.3
 
-- Source visual truth: `/var/folders/mx/tpp7b44n74n9n79smgj8g2t40000gn/T/codex-clipboard-b35f6c25-6969-4a91-8300-f5e43aabc578.png`
-- Implementation screenshot: `/tmp/runnable-code-blocks-0.1.2-browser.png`
-- Focused comparison: `/tmp/runnable-code-blocks-0.1.2-comparison.png`
+- Source visual truth:
+  - `/var/folders/mx/tpp7b44n74n9n79smgj8g2t40000gn/T/codex-clipboard-586726b2-8166-4a2d-b542-a2487aac2de4.png`
+  - `/var/folders/mx/tpp7b44n74n9n79smgj8g2t40000gn/T/codex-clipboard-664cb29f-d609-46c1-b286-988675b57c85.png`
+  - `/var/folders/mx/tpp7b44n74n9n79smgj8g2t40000gn/T/codex-clipboard-cb05b208-983b-4066-aeda-bf71d077c4e6.png`
+- Implementation screenshot: `/tmp/runnable-code-blocks-0.1.3-browser.png`
+- Focused comparison: `/tmp/runnable-code-blocks-0.1.3-comparison.png`
 - Browser viewport: 1280 × 720 CSS px, device scale factor 1
-- Source pixels: 831 × 225; implementation full-view pixels: 1265 × 977
-- Normalization: implementation cell cropped to 922 × 220, scaled to 831 px wide, and padded to 831 × 225 before horizontal comparison
-- State: dark theme, successful run with visible output
+- Source comparison pixels: 931 × 657; implementation full-view pixels: 1265 × 1009
+- Normalization: implementation content cropped to 922 × 650 and scaled to 931 × 657 before horizontal comparison
+- State: dark theme; JavaScript successful run; Kotlin browser runner unavailable by design
 
 ## Full-view comparison evidence
 
-The implementation retains the IntelliJ-style compact toolbar, editor, active line, and bottom tool-window structure. The code editor now reserves roughly two line-heights below the source. The output is a single flat region rather than a second rounded code block.
+The implementation retains the compact IntelliJ tool-window layout while replacing CSS-only editor depth with actual editor document lines. JavaScript has numbered blank lines 4 and 5; Kotlin has numbered blank lines 5 and 6. The static site and Obsidian share the same editor code and syntax theme.
 
 ## Focused comparison evidence
 
-The focused side-by-side image was used because the reported defects are confined to the code cell. It confirms that the nested `pre` border, inner radius, margin, and centered Obsidian tooltip from the source screenshot are absent in the implementation. Language and execution duration differ because the browser evidence uses JavaScript while the source screenshot uses the device Kotlin runner; this is an expected runtime constraint rather than design drift.
+The side-by-side comparison shows the reported pseudo-space on the left and actual numbered lines on the right. It also shows the previous saturated magenta/blue default CodeMirror palette on the left versus the IntelliJ Darcula mapping on the right. The source and browser adapter order the languages differently; this is content order, not component drift.
 
 ## Required fidelity surfaces
 
-- Fonts and typography: host UI font and configured monospace stack remain unchanged; `Output` is sentence case at 10.5px and no longer looks like a floating uppercase badge.
-- Spacing and layout rhythm: three source lines render in a 116.7px editor and four source lines in a 136.9px editor, providing approximately two empty line-heights after the code.
-- Colors and visual tokens: IntelliJ-inspired host tokens and the blue active-line/accent treatment are preserved.
-- Image quality and assets: no raster product assets are present; existing vector control icons are unchanged.
-- Copy and content: output value remains `2, 4, 6, 8`; the editor keeps an accessible name through `aria-labelledby` without an Obsidian hover label.
+- Fonts and typography: host UI font and monospace stack remain unchanged; syntax tokens use IntelliJ-style semantic roles rather than a generic fallback theme.
+- Spacing and layout rhythm: the editor uses real line boxes, not bottom padding. Measured visible lines are JavaScript `1–5` and Kotlin `1–6`.
+- Colors and visual tokens: dark palette is keyword `#CF8E6D`, function `#56A8F5`, string `#6AAB73`, number `#2AACB8`, identifier `#BCBEC4`, type `#C77DBB`, and comment `#7A7E85`. IntelliJ-light counterparts are provided for Obsidian light mode.
+- Image quality and assets: no raster product assets are present; existing vector controls are unchanged.
+- Copy and content: source code and output remain unchanged. The two display-only trailing lines are removed before runner invocation and never written to Markdown.
 
 ## Comparison history
 
 1. Earlier findings:
-   - P1: Obsidian's global `pre` styling created a nested rounded output panel.
-   - P1: `aria-label` surfaced as a large centered hover tooltip over the output.
-   - P2: the editor ended immediately after the final source line and looked cramped.
+   - P1: two line-heights were simulated with CSS padding, so no line numbers appeared.
+   - P1: `defaultHighlightStyle` produced colors that did not match IntelliJ semantics or the supplied target.
 2. Fixes:
-   - Reset output border, radius, shadow, and margin with host-aware selector specificity.
-   - Replaced the direct editor `aria-label` with a visually hidden `aria-labelledby` label.
-   - Added two visual line-heights of bottom padding without modifying Markdown source.
+   - Seed the ephemeral CodeMirror document with two trailing newline characters and reset to that same session value.
+   - Remove the display-only newlines immediately before execution.
+   - Replace the fallback highlighter with semantic IntelliJ Darcula/Light token mappings and Kotlin function-call detection.
 3. Post-fix evidence:
-   - Computed output style: border `0px none`, radius `0px`, margin `0px`.
-   - Browser console: no errors or warnings.
-   - Side-by-side focused comparison contains no remaining actionable P0/P1/P2 difference.
+   - Browser DOM reports five JavaScript lines and six Kotlin lines with visible sequential line numbers.
+   - Computed dark token colors match the declared IntelliJ palette; Kotlin `main`, `listOf`, `println`, `map`, and `joinToString` receive function highlighting.
+   - JavaScript execution returns `2, 4, 6, 8`; browser console has no errors or warnings.
+   - Focused comparison contains no remaining actionable P0/P1/P2 difference for the requested changes.
 
 ## Follow-up polish
 
-- P3: Recheck typography at the user's exact Obsidian window scale after installing the local build.
+- P3: none for the requested line-number and syntax-color corrections.
 
 final result: passed
