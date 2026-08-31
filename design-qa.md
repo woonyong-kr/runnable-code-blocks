@@ -8,19 +8,20 @@ No raster assets or machine-local reference paths are part of the repository. Th
 
 ## Automated evidence
 
-- `npm run verify`: 58 tests passed with statements 87.36%, branches 71.95%, functions 83.91%, and lines 91.20%; production builds, release policy, and package dry-run passed.
+- `npm run verify`: 68 tests passed with statements 88.01%, branches 74.84%, functions 86.84%, and lines 91.52%; production builds, release policy, and package dry-run passed.
 - Release verifier: 21 fences, 9 adapter modules, approved network origins, direct local process spawning, private temporary workspaces, version alignment, and a reviewed 5 MB bundle ceiling passed.
 - Static page DOM: 21 runnable blocks rendered and all 21 reached `Ready` after provider preflight.
 - Editor boundary in Chromium:
   - 100 source lines plus two numbered editing lines: `clientHeight = scrollHeight = 2070px`.
   - 101 source lines plus two numbered editing lines: `clientHeight = 2070px`, `scrollHeight = 2090px`.
   - Therefore page height grows without an editor scrollbar through source line 100; internal scrolling starts at source line 101.
-- Browser UI runs returned expected output for JavaScript, TypeScript, Python, Kotlin, Java, C, C++, C#, Swift, and Dart. Dart evidence included synchronous output, a delayed asynchronous `main()`, and `main(List<String>)`; HTML and CSS produced sandboxed previews.
+- The deployed GitHub Pages UI returned the expected result for all 21 catalog examples in one sequential audit: 19 stdout executions plus the HTML and CSS sandbox previews. Every result named the provider that actually ran it, and the browser log remained empty.
+- Dart evidence additionally included a delayed asynchronous `main()`, `main(List<String>)`, and a thrown runtime error collected as failed output.
 - Local smoke used only existing executables and passed JavaScript, Python, SQL, Kotlin, Java, C, C++, Go, Rust, C#, Swift, Ruby, and Shell. PHP, R, Scala, Dart, and Lua were correctly reported unavailable without installation.
 
 ## Provider-dependent evidence
 
-Earlier focused remote smoke runs returned the expected output for every non-preview adapter language. During the later full UI batch, Wandbox also produced transient container-resource rejections and Go/Rust response timeouts. The UI classified pre-execution container rejection separately and blocked fallback for timeout outcomes that might already have executed. This is expected degradation for a third-party service, not evidence of guaranteed provider uptime.
+The 21-language public-page audit used Kotlin Playground 2.4.10, DartPad 3.13.2, SwiftFiddle Swift 6.3.3, browser preview frames, and the compiler versions selected live by Wandbox. Earlier focused batches also observed transient Wandbox container-resource rejection and Go/Rust timeouts. The UI classified known pre-execution rejection separately and blocked fallback for timeout outcomes that might already have executed. A successful audit is evidence of current adapter behavior, not a provider uptime guarantee.
 
 ## Visual and interaction checks
 
