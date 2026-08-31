@@ -32,8 +32,10 @@ describe("runnable block UI", () => {
     await Promise.resolve();
     host.querySelector<HTMLButtonElement>(".rcb__button--secondary")?.click();
 
-    expect(host.querySelector(".rcb__status")?.textContent).toBe("Reset to Markdown source");
+    expect(host.querySelector(".rcb__status")?.textContent).toBe("Ready");
     expect(host.querySelector(".rcb__output")?.textContent).toBe("");
+    expect(host.querySelector<HTMLElement>(".rcb__console")?.hidden).toBe(true);
+    expect(host.querySelector<HTMLButtonElement>(".rcb__button--secondary")?.hidden).toBe(true);
     mounted.dispose();
     expect(host.querySelector(".rcb")).toBeNull();
   });
@@ -72,7 +74,8 @@ describe("runnable block UI", () => {
     expect(button?.disabled).toBe(true);
     button?.click();
     expect(run).not.toHaveBeenCalled();
-    expect(host.querySelector(".rcb__output")?.textContent).toBe("kotlinc missing");
+    expect(host.querySelector(".rcb__notice")?.textContent).toBe("kotlinc missing");
+    expect(host.querySelector<HTMLElement>(".rcb__notice")?.hidden).toBe(false);
   });
 
   it("renders stderr and empty successful output deterministically", async () => {
@@ -95,5 +98,17 @@ describe("runnable block UI", () => {
     await Promise.resolve();
     expect(host.querySelector(".rcb__output")?.textContent).toBe("Process finished with no output.");
   });
-});
 
+  it("keeps output hidden until execution starts", async () => {
+    const host = document.body.appendChild(document.createElement("div"));
+    mountRunnableBlock(host, {
+      code: "console.log('quiet')",
+      language: "javascript",
+      runner: createRunner()
+    });
+    await Promise.resolve();
+
+    expect(host.querySelector<HTMLElement>(".rcb__console")?.hidden).toBe(true);
+    expect(host.querySelector(".rcb__status")?.textContent).toBe("Ready");
+  });
+});

@@ -2,6 +2,8 @@
 
 Runnable Code Blocks turns explicit Markdown fences into IntelliJ-inspired editors in Obsidian and static websites. The Markdown contract stays the same while each environment selects its own runner.
 
+Its flat tool-window UI follows the same public plugin-family contract as [Link Calendar Navigator](https://github.com/woonyong-kr/link-calendar) and [Linked Graph Navigator](https://github.com/woonyong-kr/linked-graph). See [design system](docs/design-system.md).
+
 ````markdown
 ```run-kotlin
 fun main() {
@@ -14,16 +16,20 @@ console.log("Hello, JavaScript!");
 ```
 ````
 
-## Runtime boundary
+## Supported languages
 
-| Fence | Obsidian Desktop | Static browser build |
-| --- | --- | --- |
-| `run-kotlin` | Local `kotlinc` and `java` processes | Editable, explicitly unavailable |
-| `run-javascript` | Isolated Web Worker | Isolated Web Worker |
+Version 0.1.1 supports exactly two languages. It does not claim universal language support.
+
+| Fence | Obsidian Desktop | Static browser build | Execution boundary |
+| --- | --- | --- | --- |
+| `run-kotlin` | `kotlinc` and `java` processes | Editable, explicitly unavailable | Device |
+| `run-javascript` | Ephemeral Web Worker | Ephemeral Web Worker | Browser sandbox |
 
 No execution server, API, database, or persisted editor state is used. JavaScript workers are terminated after each run and after the timeout. Kotlin is compiled in a private temporary directory and the directory is removed after the run.
 
 Code runs only after the user presses **Run** or <kbd>⌘/Ctrl</kbd> + <kbd>Enter</kbd>. A runnable block can execute arbitrary code with the capabilities of its runner. Only run code you trust.
+
+The runner registry can add device, browser-native, or opt-in remote providers without changing the Markdown fence. Remote execution is deliberately absent from 0.1.1 because it sends source code to a third party and most general-purpose APIs require a secret that must not be embedded in a static site. See [runtime providers](docs/runtime-providers.md).
 
 ## Local development
 

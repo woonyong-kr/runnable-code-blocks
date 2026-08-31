@@ -36,7 +36,8 @@ export function createRunnableEditor(
   parent: HTMLElement,
   initialCode: string,
   language: string,
-  onRun: () => void
+  onRun: () => void,
+  onChange?: (value: string) => void
 ): RunnableEditor {
   const state = EditorState.create({
     doc: initialCode,
@@ -61,6 +62,9 @@ export function createRunnableEditor(
       EditorView.contentAttributes.of({
         "aria-label": `${language} runnable code editor`,
         spellcheck: "false"
+      }),
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged) onChange?.(update.state.doc.toString());
       })
     ]
   });
@@ -74,4 +78,3 @@ export function createRunnableEditor(
     }
   };
 }
-

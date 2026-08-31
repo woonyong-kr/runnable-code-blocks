@@ -59,7 +59,6 @@ describe("web adapter", () => {
     await Promise.resolve();
 
     expect(document.querySelector<HTMLButtonElement>(".rcb__button--run")?.disabled).toBe(true);
-    expect(document.querySelector(".rcb__output")?.textContent).toContain("no browser runner");
+    expect(document.querySelector(".rcb__notice")?.textContent).toContain("no browser runner");
   });
 });
-
