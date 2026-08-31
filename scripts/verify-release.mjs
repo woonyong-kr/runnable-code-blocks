@@ -68,6 +68,9 @@ for (const file of ["main.js", "dist-site/main.js"]) {
 const styles = await readFile("styles.css", "utf8");
 if (/!important/u.test(styles)) errors.push("styles.css uses !important");
 if (/\bclip-path\s*:/u.test(styles)) errors.push("styles.css uses unsupported clip-path");
+if (/-apple-system|BlinkMacSystemFont/u.test(styles)) {
+  errors.push("styles.css uses extended system fonts unsupported by the minimum Obsidian version");
+}
 for (const language of supportedLanguages) {
   if (!readme.includes(`run-${language}`)) errors.push(`README does not document run-${language}`);
   if (!sourceByFile.get("src/supported-languages.ts")?.includes(`language("${language}"`)) {

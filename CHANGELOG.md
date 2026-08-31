@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.6
+
+- Replace extended system-font fallbacks in the static landing page with the shared interface-font token, removing the Obsidian 1.11.4 compatibility warning.
+- Add a release-policy check that prevents the unsupported font fallback from returning.
+
 ## 0.2.5
 
 - Redesign the README and static demo around a one-minute quick start, live Kotlin editor, clearer value proposition, and an actual execution GIF.

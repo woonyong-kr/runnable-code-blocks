@@ -1,7 +1,7 @@
 {
   "id": "runnable-code-blocks",
   "name": "Runnable Code Blocks",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "minAppVersion": "1.13.0",
   "description": "Run 21 code-block languages inside your notes with IntelliJ-style editors and no server to host.",
   "author": "Woonyong Choi",

@@ -4,7 +4,7 @@ This page records checks for the current source tree. Provider smoke results are
 
 ## Automated verification
 
-`npm run verify` passed for version 0.2.5:
+`npm run verify` passed for version 0.2.6:
 
 - TypeScript strict checking and ESLint, including `eslint-plugin-obsidianmd` Community rules;
 - 65 tests in 9 files;

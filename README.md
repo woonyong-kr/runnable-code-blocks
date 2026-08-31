@@ -52,7 +52,7 @@ The UI follows an IntelliJ New UI-inspired editor and tool-window hierarchy: lin
 
 ## Supported languages
 
-Version 0.2.5 defines the following stable fences. “Remote” means source is sent to the named provider; this project does not operate an execution server.
+Version 0.2.6 defines the following stable fences. “Remote” means source is sent to the named provider; this project does not operate an execution server.
 
 | Fence | Static web | Obsidian |
 | --- | --- | --- |

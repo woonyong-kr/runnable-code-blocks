@@ -349,7 +349,7 @@
 .rcb-site {
   background: #f4f5f7;
   color: #202124;
-  font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--rcb-font-interface);
   margin: 0;
   overflow-x: hidden;
 }
