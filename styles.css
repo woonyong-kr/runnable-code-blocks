@@ -353,6 +353,62 @@
   letter-spacing: 0.16em;
 }
 
+.rcb-site__support {
+  background: #ffffff;
+  border: 1px solid #d9dce1;
+  border-radius: 8px;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(180px, 0.7fr) 1.3fr;
+  margin-top: 28px;
+  padding: 18px 20px;
+}
+
+.rcb-site__support h2 {
+  font-size: 1rem;
+  margin: 3px 0 0;
+}
+
+.rcb-site__support .rcb-site__support-label {
+  color: #3574f0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin: 0;
+}
+
+.rcb-site__languages {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rcb-site__language {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.rcb-site__language div {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.rcb-site__language code {
+  color: #59616b;
+  font-size: 11px;
+}
+
+.rcb-site__language span {
+  color: #59616b;
+  font-size: 11px;
+  text-align: right;
+}
+
 .rcb-site__lesson {
   margin: 42px 0;
 }
@@ -391,6 +447,16 @@
     color: #a8adb5;
   }
 
+  .rcb-site__support {
+    background: #2b2d30;
+    border-color: #43454a;
+  }
+
+  .rcb-site__language code,
+  .rcb-site__language span {
+    color: #a8adb5;
+  }
+
   .rcb-site kbd {
     background: #2b2d30;
     border-color: #4c4f55;
@@ -398,6 +464,20 @@
 }
 
 @media (max-width: 600px) {
+  .rcb-site__support {
+    grid-template-columns: 1fr;
+  }
+
+  .rcb-site__language {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .rcb-site__language span {
+    text-align: left;
+  }
+
   .rcb__toolbar {
     gap: 6px;
     padding-left: 8px;

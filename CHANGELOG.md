@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+
+- Display the complete supported-language list and each environment boundary in the browser demo and Obsidian settings.
+
 ## 0.1.3
 
 - Add two real, numbered blank lines to the ephemeral editor document instead of CSS-only space.

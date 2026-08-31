@@ -1,4 +1,5 @@
 import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { supportedLanguagesDescription } from "./supported-languages";
 
 export interface RunnableCodeBlocksSettings {
   javaPath: string;
@@ -23,6 +24,9 @@ export class RunnableCodeBlocksSettingTab extends PluginSettingTab {
 
   override display(): void {
     this.containerEl.empty();
+    new Setting(this.containerEl)
+      .setName("Supported languages")
+      .setDesc(supportedLanguagesDescription());
     new Setting(this.containerEl)
       .setName("Kotlin compiler")
       .setDesc("Executable path for local kotlinc. No server is contacted.")

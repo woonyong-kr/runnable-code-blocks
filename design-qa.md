@@ -1,4 +1,4 @@
-# Design QA · 0.1.3
+# Design QA · 0.1.4
 
 - Source visual truth:
   - `/var/folders/mx/tpp7b44n74n9n79smgj8g2t40000gn/T/codex-clipboard-586726b2-8166-4a2d-b542-a2487aac2de4.png`
@@ -6,6 +6,7 @@
   - `/var/folders/mx/tpp7b44n74n9n79smgj8g2t40000gn/T/codex-clipboard-cb05b208-983b-4066-aeda-bf71d077c4e6.png`
 - Implementation screenshot: `/tmp/runnable-code-blocks-0.1.3-browser.png`
 - Focused comparison: `/tmp/runnable-code-blocks-0.1.3-comparison.png`
+- Supported-language screenshot: `/tmp/runnable-code-blocks-0.1.4-supported-languages.png`
 - Browser viewport: 1280 × 720 CSS px, device scale factor 1
 - Source comparison pixels: 931 × 657; implementation full-view pixels: 1265 × 1009
 - Normalization: implementation content cropped to 922 × 650 and scaled to 931 × 657 before horizontal comparison
@@ -14,6 +15,8 @@
 ## Full-view comparison evidence
 
 The implementation retains the compact IntelliJ tool-window layout while replacing CSS-only editor depth with actual editor document lines. JavaScript has numbered blank lines 4 and 5; Kotlin has numbered blank lines 5 and 6. The static site and Obsidian share the same editor code and syntax theme.
+
+The browser header now lists the complete implemented language set from the same source used to register runners: JavaScript (`run-javascript`) and Kotlin (`run-kotlin`). Each row states its Obsidian and static-web execution boundary. Obsidian settings display the same complete description.
 
 ## Focused comparison evidence
 
@@ -40,6 +43,7 @@ The side-by-side comparison shows the reported pseudo-space on the left and actu
    - Browser DOM reports five JavaScript lines and six Kotlin lines with visible sequential line numbers.
    - Computed dark token colors match the declared IntelliJ palette; Kotlin `main`, `listOf`, `println`, `map`, and `joinToString` receive function highlighting.
    - JavaScript execution returns `2, 4, 6, 8`; browser console has no errors or warnings.
+   - The supported-language region contains exactly two rows, JavaScript and Kotlin, and exposes the same text in the accessibility tree.
    - Focused comparison contains no remaining actionable P0/P1/P2 difference for the requested changes.
 
 ## Follow-up polish

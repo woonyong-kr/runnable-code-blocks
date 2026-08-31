@@ -3,6 +3,7 @@ import { fenceForLanguage } from "./contracts";
 import { RunnerRegistry } from "./runner-registry";
 import { BrowserJavaScriptRunner } from "./runners/javascript-runner";
 import { LocalKotlinRunner } from "./runners/kotlin-runner";
+import { SUPPORTED_LANGUAGES } from "./supported-languages";
 import {
   DEFAULT_SETTINGS,
   RunnableCodeBlocksSettingTab,
@@ -31,16 +32,21 @@ export default class RunnableCodeBlocksPlugin extends Plugin {
   override async onload(): Promise<void> {
     await this.loadSettings();
     this.addSettingTab(new RunnableCodeBlocksSettingTab(this.app, this));
-    const registry = new RunnerRegistry()
-      .register("javascript", () => new BrowserJavaScriptRunner())
-      .register(
-        "kotlin",
-        () =>
-          new LocalKotlinRunner({
-            compilerPath: this.settings.kotlinCompilerPath,
-            javaPath: this.settings.javaPath
-          })
-      );
+    const registry = new RunnerRegistry();
+    for (const language of SUPPORTED_LANGUAGES) {
+      if (language.id === "javascript") {
+        registry.register(language.id, () => new BrowserJavaScriptRunner());
+      } else {
+        registry.register(
+          language.id,
+          () =>
+            new LocalKotlinRunner({
+              compilerPath: this.settings.kotlinCompilerPath,
+              javaPath: this.settings.javaPath
+            })
+        );
+      }
+    }
 
     for (const language of registry.languages()) {
       this.registerMarkdownCodeBlockProcessor(
