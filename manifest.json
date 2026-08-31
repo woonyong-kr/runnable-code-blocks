@@ -1,0 +1,11 @@
+{
+  "id": "runnable-code-blocks",
+  "name": "Runnable Code Blocks",
+  "version": "0.1.0",
+  "minAppVersion": "1.13.0",
+  "description": "Edit and run explicit Markdown code blocks with environment-specific local or browser runners.",
+  "author": "Woonyong Choi",
+  "authorUrl": "https://github.com/woonyong-kr",
+  "isDesktopOnly": true
+}
+

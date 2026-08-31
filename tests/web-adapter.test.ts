@@ -1,0 +1,65 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { CodeRunner } from "../src/contracts";
+import { RunnerRegistry } from "../src/runner-registry";
+import { enhanceRunnableCodeBlocks } from "../src/web-adapter";
+
+function successfulRunner(language: string): CodeRunner {
+  return {
+    environment: "browser",
+    language,
+    availability: async () => ({ available: true, detail: "Browser runner ready" }),
+    run: async () => ({ durationMs: 2, exitCode: 0, stderr: "", stdout: "Hello" })
+  };
+}
+
+afterEach(() => {
+  document.body.replaceChildren();
+});
+
+describe("web adapter", () => {
+  it("enhances only run-language fences from standard Markdown HTML", async () => {
+    document.body.innerHTML = `
+      <pre><code class="language-run-javascript">console.log("Hello")</code></pre>
+      <pre><code class="language-javascript">console.log("static")</code></pre>
+    `;
+    const registry = new RunnerRegistry().register("javascript", () => successfulRunner("javascript"));
+
+    const mounted = enhanceRunnableCodeBlocks(document, registry);
+    await Promise.resolve();
+
+    expect(mounted).toHaveLength(1);
+    expect(document.querySelectorAll(".rcb")).toHaveLength(1);
+    expect(document.querySelector(".language-javascript")?.textContent).toContain("static");
+    expect(document.querySelector(".rcb__language")?.textContent).toBe("javascript");
+  });
+
+  it("runs edited code and resets to the Markdown source", async () => {
+    document.body.innerHTML = `<pre><code class="language-run-javascript">console.log("source")</code></pre>`;
+    const run = vi.fn(async () => ({ durationMs: 2, exitCode: 0, stderr: "", stdout: "Hello" }));
+    const registry = new RunnerRegistry().register("javascript", () => ({
+      ...successfulRunner("javascript"),
+      run
+    }));
+
+    enhanceRunnableCodeBlocks(document, registry);
+    await Promise.resolve();
+    const button = document.querySelector<HTMLButtonElement>(".rcb__button--run");
+    button?.click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(run).toHaveBeenCalledWith('console.log("source")');
+    expect(document.querySelector(".rcb__output")?.textContent).toBe("Hello");
+  });
+
+  it("keeps unsupported Kotlin editable while making browser capability explicit", async () => {
+    document.body.innerHTML = `<pre><code class="language-run-kotlin">fun main() {}</code></pre>`;
+
+    enhanceRunnableCodeBlocks(document, new RunnerRegistry());
+    await Promise.resolve();
+
+    expect(document.querySelector<HTMLButtonElement>(".rcb__button--run")?.disabled).toBe(true);
+    expect(document.querySelector(".rcb__output")?.textContent).toContain("no browser runner");
+  });
+});
+

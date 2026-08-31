@@ -1,0 +1,59 @@
+{
+  "name": "runnable-code-blocks",
+  "version": "0.1.0",
+  "description": "Environment-adapted runnable Markdown code blocks for Obsidian and static websites.",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "build": "node esbuild.config.mjs production",
+    "dev": "node esbuild.config.mjs",
+    "check": "tsc --noEmit && eslint src tests site && node --check scripts/verify-release.mjs",
+    "test": "vitest run --coverage",
+    "smoke:kotlin": "tsx scripts/smoke-kotlin.ts",
+    "verify:release": "node scripts/verify-release.mjs",
+    "verify": "npm run check && npm test && npm run build && npm run verify:release && npm pack --dry-run"
+  },
+  "keywords": [
+    "obsidian",
+    "markdown",
+    "code-runner",
+    "kotlin",
+    "javascript"
+  ],
+  "author": "Woonyong Choi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/woonyong-kr/runnable-code-blocks.git"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "main.js",
+    "manifest.json",
+    "styles.css",
+    "README.md",
+    "LICENSE",
+    "versions.json"
+  ],
+  "devDependencies": {
+    "@codemirror/commands": "^6.8.1",
+    "@codemirror/lang-javascript": "^6.2.4",
+    "@codemirror/language": "^6.11.3",
+    "@codemirror/legacy-modes": "^6.5.1",
+    "@codemirror/state": "6.5.0",
+    "@codemirror/view": "^6.38.6",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.18.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "esbuild": "^0.25.9",
+    "eslint": "^10.0.1",
+    "happy-dom": "^20.11.6",
+    "obsidian": "^1.13.1",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0",
+    "tsx": "^4.20.5",
+    "vitest": "^4.1.11"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+coverage/
+dist-site/
+main.js
+*.log
+.DS_Store
+
