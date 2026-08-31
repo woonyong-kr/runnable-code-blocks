@@ -60,6 +60,8 @@ Code runs only after **Run** or <kbd>⌘/Ctrl</kbd> + <kbd>Enter</kbd>. Treat ev
 - Local adapters are Obsidian Desktop only. They run in a private temporary directory, cap output, enforce timeouts, avoid shell interpolation, and remove the directory afterward. They are process isolation, not an OS sandbox.
 - The plugin never installs runtimes and PATH is never modified. Existing language installations remain owner-controlled. Optional executable overrides are exact paths stored in plugin settings.
 
+Local execution accesses configured compiler/runtime executables and a private OS temporary directory outside the Obsidian vault because those files are required to compile and run code. It does not scan or modify unrelated files outside the vault.
+
 ## Local development
 
 Requirements:
