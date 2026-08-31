@@ -48,7 +48,16 @@ if (manifest.isDesktopOnly !== false) errors.push("browser/remote-only plugin mu
 if (!packageJson.repository?.url?.endsWith("woonyong-kr/runnable-code-blocks.git")) {
   errors.push("package repository is not the approved source");
 }
-for (const file of ["main.js", "manifest.json", "styles.css", "dist-site/index.html", "dist-site/main.js", "dist-site/styles.css"]) {
+for (const file of [
+  "main.js",
+  "manifest.json",
+  "styles.css",
+  "dist-site/index.html",
+  "dist-site/main.js",
+  "dist-site/styles.css",
+  "docs/assets/runnable-code-blocks-demo.gif",
+  "docs/assets/runnable-code-blocks-preview.jpg"
+]) {
   if ((await stat(file)).size === 0) errors.push(`${file} is empty`);
 }
 for (const file of ["main.js", "dist-site/main.js"]) {
@@ -78,6 +87,8 @@ if (!source.includes("executionState === \"not-started\"")) {
   errors.push("fallback must require a known not-started execution state");
 }
 if (!readme.includes("does not access the filesystem")) errors.push("Community runtime boundary is not documented");
+if (!readme.includes("docs/assets/runnable-code-blocks-demo.gif")) errors.push("README does not show the real execution GIF");
+if (!source.includes("script-src \\'none\\'")) errors.push("HTML/CSS previews must block scripts");
 const discoveredOrigins = [...source.matchAll(/https?:\/\/[A-Za-z0-9.-]+/gu)].map(([origin]) => origin);
 for (const origin of new Set(discoveredOrigins)) {
   if (!approvedOrigins.has(origin)) errors.push(`runtime source contains an unapproved network origin: ${origin}`);

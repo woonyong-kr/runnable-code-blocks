@@ -112,7 +112,9 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
     runButton.disabled = true;
     root.dataset.state = "running";
     status.textContent = "Running";
+    status.title = availabilityDetail;
     consolePanel.hidden = false;
+    consoleTitle.textContent = "Output";
     output.textContent = "";
     disposePreview();
     preview.replaceChildren();
@@ -167,17 +169,29 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
     editor.focus();
   });
 
-  void spec.runner.availability().then((runnerStatus) => {
-    if (lifecycle.disposed) return;
-    available = runnerStatus.available;
-    availabilityDetail = runnerStatus.detail;
-    runButton.disabled = !available;
-    root.dataset.state = available ? "idle" : "unavailable";
-    status.textContent = available ? "Ready" : "Unavailable";
-    status.title = runnerStatus.detail;
-    notice.hidden = available;
-    notice.textContent = available ? "" : runnerStatus.detail;
-  });
+  void spec.runner.availability()
+    .then((runnerStatus) => {
+      if (lifecycle.disposed) return;
+      available = runnerStatus.available;
+      availabilityDetail = runnerStatus.detail;
+      runButton.disabled = !available;
+      root.dataset.state = available ? "idle" : "unavailable";
+      status.textContent = available ? "Ready" : "Unavailable";
+      status.title = runnerStatus.detail;
+      notice.hidden = available;
+      notice.textContent = available ? "" : runnerStatus.detail;
+    })
+    .catch((error: unknown) => {
+      if (lifecycle.disposed) return;
+      available = false;
+      availabilityDetail = error instanceof Error ? error.message : String(error);
+      runButton.disabled = true;
+      root.dataset.state = "unavailable";
+      status.textContent = "Unavailable";
+      status.title = availabilityDetail;
+      notice.hidden = false;
+      notice.textContent = availabilityDetail;
+    });
 
   return {
     dispose: () => {
@@ -194,7 +208,7 @@ function renderPreview(host: HTMLElement, preview: NonNullable<RunResult["previe
   host.replaceChildren();
   const frame = host.createEl("iframe");
   frame.className = "rcb__preview-frame";
-  frame.setAttribute("sandbox", "allow-scripts");
+  frame.setAttribute("sandbox", "");
   frame.setAttribute("title", "Code preview");
   frame.srcdoc = preview.html;
   host.hidden = false;

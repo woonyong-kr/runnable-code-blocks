@@ -25,27 +25,24 @@ if (languageList !== null) {
     fence.textContent = language.fence;
 
     const environments = item.createSpan();
-    environments.textContent = `Obsidian · ${language.obsidian} / Web · ${language.browser}`;
+    environments.textContent = language.browser;
   }
+}
+
+const featuredTestCase = document.querySelector<HTMLElement>("[data-featured-test-case]");
+const featuredExample = LANGUAGE_EXAMPLES.find(({ language }) => language === "kotlin");
+if (featuredTestCase !== null && featuredExample !== undefined) {
+  appendExample(featuredTestCase, {
+    ...featuredExample,
+    code: 'fun main() {\n    val note = "Obsidian"\n    println("Hello from $note!")\n}',
+    expected: "Hello from Obsidian!"
+  }, true);
 }
 
 const testCases = document.querySelector<HTMLElement>("[data-language-test-cases]");
 if (testCases !== null) {
   for (const example of LANGUAGE_EXAMPLES) {
-    const language = SUPPORTED_LANGUAGES.find(({ id }) => id === example.language);
-    if (language === undefined) continue;
-    const section = testCases.createEl("section");
-    section.className = "rcb-site__lesson";
-    const title = section.createEl("h2");
-    title.textContent = `${language.label} · ${language.browser}`;
-    const description = section.createEl("p");
-    description.append("Expected · ");
-    const expected = description.createEl("code");
-    expected.textContent = example.expected;
-    const pre = section.createEl("pre");
-    const code = pre.createEl("code");
-    code.className = `language-${language.fence}`;
-    code.textContent = example.code;
+    appendExample(testCases, example, false);
   }
 }
 
@@ -55,4 +52,35 @@ const registry = createRunnerRegistry({
   remoteExecutionEnabled: true
 });
 
-enhanceRunnableCodeBlocks(document, registry);
+if (featuredTestCase !== null) enhanceRunnableCodeBlocks(featuredTestCase, registry);
+
+const allExamples = document.querySelector<HTMLDetailsElement>(".rcb-site__all-examples");
+let mountedAllExamples = false;
+allExamples?.addEventListener("toggle", () => {
+  if (!allExamples.open || mountedAllExamples || testCases === null) return;
+  mountedAllExamples = true;
+  enhanceRunnableCodeBlocks(testCases, registry);
+});
+
+function appendExample(
+  parent: HTMLElement,
+  example: (typeof LANGUAGE_EXAMPLES)[number],
+  featured: boolean
+): void {
+  const language = SUPPORTED_LANGUAGES.find(({ id }) => id === example.language);
+  if (language === undefined) return;
+  const section = parent.createEl("section");
+  section.className = featured ? "rcb-site__lesson rcb-site__lesson--featured" : "rcb-site__lesson";
+  if (!featured) {
+    const title = section.createEl("h2");
+    title.textContent = `${language.label} · ${language.browser}`;
+    const description = section.createEl("p");
+    description.append("Expected · ");
+    const expected = description.createEl("code");
+    expected.textContent = example.expected;
+  }
+  const pre = section.createEl("pre");
+  const code = pre.createEl("code");
+  code.className = `language-${language.fence}`;
+  code.textContent = example.code;
+}

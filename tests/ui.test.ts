@@ -101,6 +101,35 @@ describe("runnable block UI", () => {
     expect(host.querySelector(".rcb__output")?.textContent).toBe("sandbox failed");
   });
 
+  it("clears a previous provider label before showing a later runner error", async () => {
+    const host = document.body.appendChild(document.createElement("div"));
+    const runner = createRunner({
+      run: vi
+        .fn()
+        .mockResolvedValueOnce({
+          durationMs: 2,
+          exitCode: 0,
+          provider: "First provider",
+          stderr: "",
+          stdout: "ok"
+        })
+        .mockRejectedValueOnce(new Error("second run failed"))
+    });
+    mountRunnableBlock(host, { code: "code", language: "javascript", runner });
+    await Promise.resolve();
+    const button = host.querySelector<HTMLButtonElement>(".rcb__button--run");
+    button?.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(host.querySelector(".rcb__console-title")?.textContent).toBe("Output · First provider");
+
+    button?.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(host.querySelector(".rcb__console-title")?.textContent).toBe("Output");
+    expect(host.querySelector(".rcb__output")?.textContent).toBe("second run failed");
+  });
+
   it("disables execution when the runner is unavailable", async () => {
     const run = vi.fn();
     const host = document.body.appendChild(document.createElement("div"));
@@ -123,6 +152,23 @@ describe("runnable block UI", () => {
     expect(host.querySelector<HTMLElement>(".rcb__notice")?.hidden).toBe(false);
   });
 
+  it("turns availability exceptions into a stable unavailable state", async () => {
+    const host = document.body.appendChild(document.createElement("div"));
+    mountRunnableBlock(host, {
+      code: "print('hello')",
+      language: "python",
+      runner: createRunner({
+        availability: async () => { throw new Error("provider preflight crashed"); }
+      })
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(host.querySelector(".rcb")?.getAttribute("data-state")).toBe("unavailable");
+    expect(host.querySelector<HTMLButtonElement>(".rcb__button--run")?.disabled).toBe(true);
+    expect(host.querySelector(".rcb__notice")?.textContent).toBe("provider preflight crashed");
+  });
+
   it("renders stderr and empty successful output deterministically", async () => {
     const host = document.body.appendChild(document.createElement("div"));
     const runner = createRunner({
@@ -142,6 +188,32 @@ describe("runnable block UI", () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(host.querySelector(".rcb__output")?.textContent).toBe("Process finished with no output.");
+  });
+
+  it("renders HTML previews in a script-disabled sandbox", async () => {
+    const host = document.body.appendChild(document.createElement("div"));
+    mountRunnableBlock(host, {
+      code: "<h1>Hello</h1>",
+      language: "html",
+      runner: createRunner({
+        language: "html",
+        run: async () => ({
+          durationMs: 0,
+          exitCode: 0,
+          preview: { html: "<h1>Hello</h1>", kind: "html" },
+          stderr: "",
+          stdout: "Preview rendered."
+        })
+      })
+    });
+    await Promise.resolve();
+    host.querySelector<HTMLButtonElement>(".rcb__button--run")?.click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const frame = host.querySelector<HTMLIFrameElement>('.rcb__preview-frame');
+    expect(frame?.getAttribute("sandbox")).toBe("");
+    expect(frame?.srcdoc).toBe("<h1>Hello</h1>");
   });
 
   it("shows the provider environment that actually completed a fallback run", async () => {

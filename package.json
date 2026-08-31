@@ -1,7 +1,7 @@
 {
   "name": "runnable-code-blocks",
-  "version": "0.2.4",
-  "description": "Environment-adapted runnable Markdown code blocks for Obsidian and static websites.",
+  "version": "0.2.5",
+  "description": "Run 21 Markdown code-block languages in Obsidian and static websites without hosting an execution server.",
   "main": "main.js",
   "type": "module",
   "scripts": {
@@ -18,6 +18,9 @@
     "obsidian",
     "markdown",
     "code-runner",
+    "code-block",
+    "learning",
+    "wiki",
     "kotlin",
     "javascript",
     "polyglot"
@@ -27,6 +30,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/woonyong-kr/runnable-code-blocks.git"
+  },
+  "homepage": "https://woonyong-kr.github.io/runnable-code-blocks/",
+  "bugs": {
+    "url": "https://github.com/woonyong-kr/runnable-code-blocks/issues"
   },
   "engines": {
     "node": ">=22"

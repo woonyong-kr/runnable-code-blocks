@@ -5,7 +5,6 @@ export class FallbackRunner implements CodeRunner {
   readonly environment: RunnerEnvironment;
   readonly language: string;
   readonly #runners: readonly CodeRunner[];
-  #availability: Array<{ available: boolean; detail: string; runner: CodeRunner }> | null = null;
 
   constructor(language: string, runners: readonly CodeRunner[]) {
     if (runners.length === 0) throw new Error(`At least one runner is required for ${language}`);
@@ -15,20 +14,20 @@ export class FallbackRunner implements CodeRunner {
   }
 
   async availability(): Promise<RunnerAvailability> {
-    this.#availability = [];
+    const statuses: Array<{ available: boolean; detail: string; runner: CodeRunner }> = [];
     for (const runner of this.#runners) {
       try {
         const status = await runner.availability();
-        this.#availability.push({ ...status, runner });
+        statuses.push({ ...status, runner });
       } catch (error) {
-        this.#availability.push({
+        statuses.push({
           available: false,
           detail: error instanceof Error ? error.message : String(error),
           runner
         });
       }
     }
-    const available = this.#availability.filter((status) => status.available);
+    const available = statuses.filter((status) => status.available);
     return available.length > 0
       ? {
           available: true,
@@ -36,7 +35,7 @@ export class FallbackRunner implements CodeRunner {
         }
       : {
           available: false,
-          detail: this.#availability.map(({ detail, runner }) => `${runner.environment}: ${detail}`).join(" / ")
+          detail: statuses.map(({ detail, runner }) => `${runner.environment}: ${detail}`).join(" / ")
         };
   }
 

@@ -8,6 +8,7 @@ describe("browser adapters", () => {
     const html = await new BrowserPreviewRunner("html").run("<h1>Hello</h1>");
     const css = await new BrowserPreviewRunner("css").run(".preview { color: red; }");
     expect(html.preview?.html).toContain("Content-Security-Policy");
+    expect(html.preview?.html).toContain("script-src 'none'");
     expect(html.preview?.html).toContain("<h1>Hello</h1>");
     expect(css.preview?.html).toContain(".preview { color: red; }");
     const documentWithHead = await new BrowserPreviewRunner("html").run("<html><head><title>x</title></head><body>x</body></html>");

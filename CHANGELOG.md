@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.5
+
+- Redesign the README and static demo around a one-minute quick start, live Kotlin editor, clearer value proposition, and an actual execution GIF.
+- Turn runner preflight exceptions into a stable unavailable UI state and clear stale provider labels before each execution.
+- Disable scripts inside HTML/CSS previews in addition to their existing network-blocking CSP and sandbox.
+- Remove unused exports and fallback state, replace stale QA claims with current verification evidence, and add automatic pull-request and main-branch verification.
+
 ## 0.2.4
 
 - Replace global DOM, timer, and HTTP usage with Obsidian-native and explicit browser adapters.

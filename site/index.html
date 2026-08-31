@@ -1,28 +1,94 @@
 <!doctype html>
-<html lang="ko">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <title>Runnable Code Blocks · Browser adapter</title>
+    <meta name="description" content="Run 21 Markdown code-block languages in Obsidian and static websites without hosting an execution server." />
+    <title>Runnable Code Blocks · Run code where you learn</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body class="rcb-site">
     <main class="rcb-site__main">
       <header class="rcb-site__hero">
-        <p class="rcb-site__eyebrow">STATIC BROWSER ADAPTER</p>
-        <h1>Runnable Code Blocks</h1>
-        <p>같은 <code>run-&lt;language&gt;</code> Markdown 문법을 로컬 Obsidian과 정적 웹에서 사용합니다.</p>
-        <section class="rcb-site__support" aria-labelledby="supported-languages-title">
-          <div>
-            <p class="rcb-site__support-label">SUPPORTED LANGUAGES · <span data-supported-language-count></span></p>
-            <h2 id="supported-languages-title">현재 지원되는 모든 언어</h2>
+        <nav class="rcb-site__nav" aria-label="Project links">
+          <a class="rcb-site__brand" href="https://github.com/woonyong-kr/runnable-code-blocks">
+            <span aria-hidden="true">&lt;/&gt;</span>
+            Runnable Code Blocks
+          </a>
+          <a class="rcb-site__nav-link" href="https://github.com/woonyong-kr/runnable-code-blocks">GitHub</a>
+        </nav>
+
+        <div class="rcb-site__hero-copy">
+          <p class="rcb-site__eyebrow">OBSIDIAN · STATIC WEB · 21 LANGUAGES</p>
+          <h1>Run code where<br />you learn.</h1>
+          <p class="rcb-site__lede">
+            Turn explicit Markdown fences into IntelliJ-inspired editors. Edit, run, and inspect output
+            without leaving the note—and without hosting your own execution server.
+          </p>
+          <div class="rcb-site__cta-row">
+            <a class="rcb-site__cta rcb-site__cta--primary" href="obsidian://show-plugin?id=runnable-code-blocks">Add to Obsidian</a>
+            <a class="rcb-site__cta rcb-site__cta--secondary" href="#live-demo">Try the live editor</a>
           </div>
-          <ul class="rcb-site__languages" data-supported-languages></ul>
-        </section>
+          <ul class="rcb-site__proof" aria-label="Project highlights">
+            <li>Markdown stays portable</li>
+            <li>No account or API key</li>
+            <li>Reload resets every edit</li>
+          </ul>
+        </div>
       </header>
 
-      <section aria-label="All language runtime tests" data-language-test-cases></section>
+      <section class="rcb-site__showcase" id="live-demo" aria-labelledby="live-demo-title">
+        <div class="rcb-site__section-heading">
+          <div>
+            <p class="rcb-site__section-kicker">LIVE · REAL PROVIDER</p>
+            <h2 id="live-demo-title">Change the code. Press Run. Keep learning.</h2>
+          </div>
+          <p>The editor is temporary by design. Your Markdown source remains the source of truth.</p>
+        </div>
+        <div data-featured-test-case></div>
+        <p class="rcb-site__shortcut">Keyboard shortcut: <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd></p>
+      </section>
+
+      <section class="rcb-site__benefits" aria-label="Why use Runnable Code Blocks">
+        <article>
+          <span>01</span>
+          <h2>Write once</h2>
+          <p>The same <code>run-&lt;language&gt;</code> fence works in Obsidian and the static web adapter.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h2>See the boundary</h2>
+          <p>Every result names the browser or third-party provider that actually ran the code.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h2>Own the note</h2>
+          <p>No saved editor state, database, API key, or project-owned execution backend is required.</p>
+        </article>
+      </section>
+
+      <section class="rcb-site__support" aria-labelledby="supported-languages-title">
+        <div class="rcb-site__support-intro">
+          <p class="rcb-site__support-label">SUPPORTED LANGUAGES · <span data-supported-language-count></span></p>
+          <h2 id="supported-languages-title">One Markdown contract, 21 adapters</h2>
+          <p>Browser-native previews and named public providers keep the document format independent of its host.</p>
+        </div>
+        <ul class="rcb-site__languages" data-supported-languages></ul>
+      </section>
+
+      <details class="rcb-site__all-examples">
+        <summary>
+          <span>Run every language example</span>
+          <span>21 live checks</span>
+        </summary>
+        <div data-language-test-cases></div>
+      </details>
+
+      <footer class="rcb-site__footer">
+        <strong>Runnable Code Blocks</strong>
+        <span>MIT licensed · Built for portable learning notes</span>
+      </footer>
     </main>
     <script>
       (() => {

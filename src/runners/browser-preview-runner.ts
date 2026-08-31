@@ -30,7 +30,7 @@ export class BrowserPreviewRunner implements CodeRunner {
   }
 }
 
-const CSP = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: blob:; style-src \'unsafe-inline\'; script-src \'unsafe-inline\';">';
+const CSP = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data: blob:; style-src \'unsafe-inline\'; script-src \'none\';">';
 
 function secureHtml(html: string): string {
   if (/<head(?:\s|>)/iu.test(html)) return html.replace(/<head([^>]*)>/iu, `<head$1>${CSP}`);

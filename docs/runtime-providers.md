@@ -39,7 +39,7 @@ This conservative boundary prevents a remote timeout, lost connection, or ambigu
 | `dartpad-runner.ts` | Dart | `stable.api.dartpad.dev` compiles source; returned JavaScript runs in a temporary sandboxed `dartpad.dev/frame.html` |
 | `javascript-runner.ts` | JavaScript | Fresh local Web Worker |
 | `typescript-runner.ts` | TypeScript | Bundled TypeScript transpiler → fresh Web Worker |
-| `browser-preview-runner.ts` | HTML, CSS | Sandboxed iframe with restrictive CSP |
+| `browser-preview-runner.ts` | HTML, CSS | Script-disabled sandboxed iframe with restrictive CSP |
 
 External providers are public services, not project infrastructure. They may change endpoints, compiler names, CORS, limits, or availability without a release from this project. They provide convenience execution, not an uptime guarantee. DartPad's old arbitrary-code embed protocol is not used; its supported compile API and execution frame are separate adapter steps.
 

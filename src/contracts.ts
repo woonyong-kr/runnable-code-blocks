@@ -1,4 +1,4 @@
-export const RUNNABLE_PREFIX = "run-";
+const RUNNABLE_PREFIX = "run-";
 
 export type RunnerEnvironment = "browser" | "remote";
 
@@ -12,14 +12,12 @@ export interface RunResult {
   environment?: RunnerEnvironment;
   exitCode: number;
   provider?: string;
-  preview?: RunPreview;
+  preview?: {
+    html: string;
+    kind: "html";
+  };
   stderr: string;
   stdout: string;
-}
-
-export interface RunPreview {
-  html: string;
-  kind: "html";
 }
 
 export interface CodeRunner {
