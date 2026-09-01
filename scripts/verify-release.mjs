@@ -17,6 +17,18 @@ const readme = await readFile("README.md", "utf8");
 const releaseMedia = JSON.parse(await readFile("docs/release-media.json", "utf8"));
 const errors = [];
 
+const imageDimensions = (data, path) => {
+  if (data.subarray(0, 8).toString("hex") === "89504e470d0a1a0a") {
+    return { width: data.readUInt32BE(16), height: data.readUInt32BE(20) };
+  }
+  const gifHeader = data.subarray(0, 6).toString("ascii");
+  if (gifHeader === "GIF87a" || gifHeader === "GIF89a") {
+    return { width: data.readUInt16LE(6), height: data.readUInt16LE(8) };
+  }
+  errors.push(`${path} must contain real PNG or GIF bytes`);
+  return { width: 0, height: 0 };
+};
+
 const supportedLanguages = [
   "javascript", "typescript", "python", "sql", "html", "css", "kotlin", "java", "c", "cpp",
   "go", "rust", "csharp", "swift", "ruby", "php", "r", "scala", "dart", "lua", "shell"
@@ -66,11 +78,15 @@ for (const file of [
 for (const asset of releaseMedia.assets) {
   const data = await readFile(asset.path);
   const digest = createHash("sha256").update(data).digest("hex");
+  const dimensions = imageDimensions(data, asset.path);
   if (digest !== asset.sha256) errors.push(`${asset.path} hash does not match release-media.json`);
   if (!Number.isInteger(asset.width) || asset.width <= 0) errors.push(`${asset.path} has an invalid width`);
   if (!Number.isInteger(asset.height) || asset.height <= 0) errors.push(`${asset.path} has an invalid height`);
   if (asset.width < 1600 || asset.height < 900) errors.push(`${asset.path} is too small`);
   if (asset.width * 9 !== asset.height * 16) errors.push(`${asset.path} must use a 16:9 frame`);
+  if (asset.width !== dimensions.width || asset.height !== dimensions.height) {
+    errors.push(`${asset.path} dimensions are stale`);
+  }
 }
 for (const file of ["main.js", "dist-site/main.js"]) {
   if ((await stat(file)).size > 5_000_000) errors.push(`${file} exceeds the reviewed 5 MB bundle ceiling`);
@@ -106,6 +122,7 @@ if (!source.includes("executionState === \"not-started\"")) {
 }
 if (!readme.includes("does not access the filesystem")) errors.push("Community runtime boundary is not documented");
 if (!readme.includes("docs/assets/runnable-code-blocks-preview.png")) errors.push("README does not show the sharp execution preview");
+if (!readme.includes("docs/assets/runnable-code-blocks-demo.gif")) errors.push("README does not show the animated execution demo");
 if (!source.includes("script-src \\'none\\'")) errors.push("HTML/CSS previews must block scripts");
 const discoveredOrigins = [...source.matchAll(/https?:\/\/[A-Za-z0-9.-]+/gu)].map(([origin]) => origin);
 for (const origin of new Set(discoveredOrigins)) {

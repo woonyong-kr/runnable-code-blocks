@@ -20,6 +20,8 @@
   <a href="https://community.obsidian.md/plugins/runnable-code-blocks">View the Community page</a>
 </p>
 
+![Runnable Code Blocks editing and running a portable Markdown example in Obsidian and the static adapter.](docs/assets/runnable-code-blocks-demo.gif)
+
 ![Runnable Code Blocks showing Kotlin and JavaScript editors in a sharp 16:9 Obsidian capture.](docs/assets/runnable-code-blocks-preview.png)
 
 Runnable Code Blocks keeps the explanation, the experiment, and the result in one note. Readers edit a temporary copy, press **Run**, and see exactly which browser or public provider produced the output; the Markdown source stays portable and unchanged.
@@ -27,7 +29,7 @@ Runnable Code Blocks keeps the explanation, the experiment, and the result in on
 - **21 exact language fences** — Kotlin, JavaScript, TypeScript, Python, SQL, Java, C, C++, Go, Rust, and more.
 - **No execution server to host** — browser-native runners and named public providers work in Obsidian and the static adapter.
 - **Portable Markdown** — the document stores ordinary `run-<language>` fences instead of plugin-specific state.
-- **Disposable editing** — change and run a sample freely; reloading restores the Markdown source.
+- **Disposable editing** — change and run a sample freely; **Reset** or reopening the rendered note restores the Markdown source.
 - **Visible execution boundaries** — every result names the browser or third-party provider that actually ran it.
 
 ## At a glance
@@ -56,7 +58,7 @@ fun main() {
 
 3. Open Reading view and select **Run**, or press <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> inside the editor.
 
-The output appears directly beneath the code. **Reset** restores the current Markdown source; reloading the note discards all temporary edits.
+The output appears directly beneath the code. **Reset** restores the current Markdown source; closing and reopening the rendered note discards its temporary edits.
 
 ## What happens when you press Run
 
@@ -131,7 +133,7 @@ Open **Settings → Community plugins → Runnable Code Blocks**:
 
 - **Run is unavailable:** hover or focus the status text to see which provider preflight failed. Public providers can be temporarily unavailable.
 - **Only four languages work after disabling remote execution:** this is expected. JavaScript, TypeScript, HTML, and CSS are the browser-native adapters.
-- **Edits disappeared after reload:** this is intentional. Change the Markdown source when you want to keep an example.
+- **Edits disappeared after Reset or reopening the note:** this is intentional. Change the Markdown source when you want to keep an example.
 - **A program failed but no fallback ran:** compile errors, runtime failures, and unknown remote outcomes are completed attempts, so the plugin avoids executing the same code twice.
 
 ## Static website integration

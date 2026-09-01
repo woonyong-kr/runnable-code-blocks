@@ -1,14 +1,20 @@
 {
   "version": "0.2.8",
-  "capturedWith": "Obsidian 1.13.7",
+  "capturedWith": "Obsidian 1.13.7 and the static web adapter",
   "capturedAt": "2026-09-01",
   "publicSafeSample": true,
   "assets": [
     {
+      "path": "docs/assets/runnable-code-blocks-demo.gif",
+      "width": 1600,
+      "height": 900,
+      "sha256": "a4ba41a95ce77cdc47ddc7d6b5392d45eb7b9c8481b6cbe37d88679e893861bb"
+    },
+    {
       "path": "docs/assets/runnable-code-blocks-preview.png",
       "width": 1600,
       "height": 900,
-      "sha256": "88ddf1cf3ea8b73d87920b5df79c09cecc05ffa17e8db1a255149e0dd797f13d"
+      "sha256": "7cb2ad4055f3fcab61f9c5b7201e02c693241ae4bb1867f1fbfcdc75d4a79e22"
     }
   ]
 }
