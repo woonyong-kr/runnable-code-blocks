@@ -1,20 +1,14 @@
 {
-  "version": "0.2.7",
-  "capturedWith": "Chrome and Kotlin Playground 2.4.10",
+  "version": "0.2.8",
+  "capturedWith": "Obsidian 1.13.7",
   "capturedAt": "2026-09-01",
   "publicSafeSample": true,
   "assets": [
     {
-      "path": "docs/assets/runnable-code-blocks-demo.gif",
-      "width": 1130,
-      "height": 590,
-      "sha256": "1a6b04fbba63c5607c7c5ae7c6846abe8ea322abe714a0f71ea686f937db29cf"
-    },
-    {
-      "path": "docs/assets/runnable-code-blocks-preview.jpg",
-      "width": 1185,
-      "height": 790,
-      "sha256": "05946891dc4e8a0bb96f79e78e59f552c531975625acb2068b3404634cfc548e"
+      "path": "docs/assets/runnable-code-blocks-preview.png",
+      "width": 1600,
+      "height": 900,
+      "sha256": "88ddf1cf3ea8b73d87920b5df79c09cecc05ffa17e8db1a255149e0dd797f13d"
     }
   ]
 }

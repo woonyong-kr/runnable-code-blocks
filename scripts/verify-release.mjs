@@ -59,7 +59,6 @@ for (const file of [
   "dist-site/index.html",
   "dist-site/main.js",
   "dist-site/styles.css",
-  "docs/assets/runnable-code-blocks-demo.gif",
   "docs/assets/runnable-code-blocks-preview.png"
 ]) {
   if ((await stat(file)).size === 0) errors.push(`${file} is empty`);
@@ -81,6 +80,9 @@ for (const file of ["main.js", "dist-site/main.js"]) {
 const styles = await readFile("styles.css", "utf8");
 if (/!important/u.test(styles)) errors.push("styles.css uses !important");
 if (/\bclip-path\s*:/u.test(styles)) errors.push("styles.css uses unsupported clip-path");
+if (!styles.includes(".cm-editor.cm-focused > .cm-scroller")) {
+  errors.push("CodeMirror's nested focus outline must remain suppressed");
+}
 if (/-apple-system|BlinkMacSystemFont/u.test(styles)) {
   errors.push("styles.css uses extended system fonts unsupported by the minimum Obsidian version");
 }
@@ -103,7 +105,6 @@ if (!source.includes("executionState === \"not-started\"")) {
   errors.push("fallback must require a known not-started execution state");
 }
 if (!readme.includes("does not access the filesystem")) errors.push("Community runtime boundary is not documented");
-if (!readme.includes("docs/assets/runnable-code-blocks-demo.gif")) errors.push("README does not show the real execution GIF");
 if (!readme.includes("docs/assets/runnable-code-blocks-preview.png")) errors.push("README does not show the sharp execution preview");
 if (!source.includes("script-src \\'none\\'")) errors.push("HTML/CSS previews must block scripts");
 const discoveredOrigins = [...source.matchAll(/https?:\/\/[A-Za-z0-9.-]+/gu)].map(([origin]) => origin);

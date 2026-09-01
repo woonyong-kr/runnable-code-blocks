@@ -2,8 +2,9 @@
 
 ## 0.2.8
 
-- Replace every public visual with a public-safe 16:9 execution capture at 1600×900.
-- Recut the walkthrough around ready editor, temporary edit, and verified inline output so the Community page shows the real learning loop.
+- Remove CodeMirror's nested focus outline so the editor no longer looks like a selected region while typing.
+- Replace the low-resolution Community walkthrough with a public-safe 1600×900 Obsidian PNG; a new execution GIF is intentionally deferred.
+- Lead the Community page with the real disposable editor while keeping the learning loop and provider boundary concise.
 - Require sharp 16:9 README media in the release gate and make the disposable-editing and provider boundary easier to understand.
 
 ## 0.2.7

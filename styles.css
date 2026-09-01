@@ -198,7 +198,8 @@
   background: transparent;
 }
 
-.rcb__editor .cm-editor.cm-focused {
+.rcb__editor .cm-editor.cm-focused,
+.rcb__editor .cm-editor.cm-focused > .cm-scroller {
   outline: none;
 }
 

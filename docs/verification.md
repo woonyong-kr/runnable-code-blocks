@@ -4,16 +4,16 @@ This page records checks for the current source tree. Provider smoke results are
 
 ## Automated verification
 
-`npm run verify` passed for version 0.2.7:
+`npm run verify` passed for version 0.2.8:
 
 - TypeScript strict checking and ESLint, including `eslint-plugin-obsidianmd` Community rules;
 - Knip dead-code and dependency analysis;
 - 68 tests in 10 files;
-- coverage: 88.08% statements, 73.34% branches, 87.87% functions, and 91.86% lines;
+- coverage: 88.08% statements, 73.57% branches, 87.87% functions, and 91.86% lines;
 - production Obsidian bundle: 893.5 KB;
 - production static adapter bundle: 804.5 KB;
 - release-policy check: 21 languages and 8 runtime adapters;
-- npm package dry run: 7 files, 278.7 KB compressed.
+- npm package dry run: 7 files, 278.8 KB compressed.
 
 Additional repository checks passed:
 
@@ -31,13 +31,13 @@ The generated static adapter was served from `dist-site/` and inspected in a rea
 - HTML and CSS rendered successfully in script-disabled preview frames, while Dart returned `dart-ok` through DartPad and its isolated execution frame;
 - desktop and 390 × 844 responsive layouts had no horizontal document overflow;
 - the mobile editor preserved numbered lines, syntax highlighting, and an accessible Run control;
-- the README GIF was built from this real execution at 1130 × 590, 5.4 seconds, and 648 KB;
-- the Community gallery preview was captured at its recommended 3:2 aspect ratio after a successful run;
+- the Community preview is a public-safe 1600 × 900 Obsidian capture of the disposable Kotlin and JavaScript editors;
 - the landing page mounts one featured runner at startup and defers the other 21 live examples until their disclosure is opened.
 
 ## Reviewed failure paths
 
 - A rejected runner preflight now becomes a stable `Unavailable` state instead of an unhandled promise rejection.
+- CodeMirror's nested focus outline is suppressed so keyboard focus does not resemble a selected editor region; focused controls keep their visible focus ring.
 - A new run clears the previous provider heading before an error result is rendered.
 - HTML/CSS preview frames block scripts with both a sandbox and `script-src 'none'` CSP.
 - Remote fallback continues only after a known `not-started` result; an unknown outcome never executes the same code again.
