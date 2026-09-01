@@ -12,6 +12,18 @@ export const DEFAULT_SETTINGS: RunnableCodeBlocksSettings = {
   remoteExecutionEnabled: true
 };
 
+export function normalizeSettings(value: unknown): RunnableCodeBlocksSettings {
+  const stored = isRecord(value) ? value : {};
+  return {
+    executionOrder: stored.executionOrder === "browser-first" || stored.executionOrder === "private-first"
+      ? "browser-first"
+      : DEFAULT_SETTINGS.executionOrder,
+    remoteExecutionEnabled: typeof stored.remoteExecutionEnabled === "boolean"
+      ? stored.remoteExecutionEnabled
+      : DEFAULT_SETTINGS.remoteExecutionEnabled
+  };
+}
+
 type RunnableSettingKey = keyof RunnableCodeBlocksSettings;
 
 export class RunnableCodeBlocksSettingTab extends PluginSettingTab {
@@ -73,4 +85,8 @@ export class RunnableCodeBlocksSettingTab extends PluginSettingTab {
     }
     await this.#plugin.saveSettings();
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

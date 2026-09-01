@@ -1,4 +1,4 @@
-export type RemoteAdapterId = "browser-preview" | "dartpad" | "kotlin-playground" | "swiftfiddle" | "wandbox";
+type RemoteAdapterId = "browser-preview" | "dartpad" | "kotlin-playground" | "swiftfiddle" | "wandbox";
 
 export interface SupportedLanguage {
   browser: string;

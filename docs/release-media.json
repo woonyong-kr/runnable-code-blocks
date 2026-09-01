@@ -1,0 +1,20 @@
+{
+  "version": "0.2.7",
+  "capturedWith": "Chrome and Kotlin Playground 2.4.10",
+  "capturedAt": "2026-09-01",
+  "publicSafeSample": true,
+  "assets": [
+    {
+      "path": "docs/assets/runnable-code-blocks-demo.gif",
+      "width": 1130,
+      "height": 590,
+      "sha256": "1a6b04fbba63c5607c7c5ae7c6846abe8ea322abe714a0f71ea686f937db29cf"
+    },
+    {
+      "path": "docs/assets/runnable-code-blocks-preview.jpg",
+      "width": 1185,
+      "height": 790,
+      "sha256": "05946891dc4e8a0bb96f79e78e59f552c531975625acb2068b3404634cfc548e"
+    }
+  ]
+}

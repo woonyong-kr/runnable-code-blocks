@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -13,6 +14,7 @@ const sourceByFile = new Map(
 );
 const source = [...sourceByFile.values()].join("\n");
 const readme = await readFile("README.md", "utf8");
+const releaseMedia = JSON.parse(await readFile("docs/release-media.json", "utf8"));
 const errors = [];
 
 const supportedLanguages = [
@@ -44,6 +46,8 @@ if (manifest.id !== "runnable-code-blocks") errors.push("unexpected manifest id"
 if (packageJson.name !== manifest.id) errors.push("manifest and package names differ");
 if (packageJson.version !== manifest.version) errors.push("manifest and package versions differ");
 if (versions[manifest.version] !== manifest.minAppVersion) errors.push("versions.json does not match manifest");
+if (releaseMedia.version !== manifest.version) errors.push("release media version does not match manifest");
+if (releaseMedia.publicSafeSample !== true) errors.push("release media must use a public-safe sample");
 if (manifest.isDesktopOnly !== false) errors.push("browser/remote-only plugin must remain available beyond desktop");
 if (!packageJson.repository?.url?.endsWith("woonyong-kr/runnable-code-blocks.git")) {
   errors.push("package repository is not the approved source");
@@ -59,6 +63,13 @@ for (const file of [
   "docs/assets/runnable-code-blocks-preview.jpg"
 ]) {
   if ((await stat(file)).size === 0) errors.push(`${file} is empty`);
+}
+for (const asset of releaseMedia.assets) {
+  const data = await readFile(asset.path);
+  const digest = createHash("sha256").update(data).digest("hex");
+  if (digest !== asset.sha256) errors.push(`${asset.path} hash does not match release-media.json`);
+  if (!Number.isInteger(asset.width) || asset.width <= 0) errors.push(`${asset.path} has an invalid width`);
+  if (!Number.isInteger(asset.height) || asset.height <= 0) errors.push(`${asset.path} has an invalid height`);
 }
 for (const file of ["main.js", "dist-site/main.js"]) {
   if ((await stat(file)).size > 5_000_000) errors.push(`${file} exceeds the reviewed 5 MB bundle ceiling`);

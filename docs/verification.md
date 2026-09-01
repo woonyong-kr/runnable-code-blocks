@@ -4,15 +4,16 @@ This page records checks for the current source tree. Provider smoke results are
 
 ## Automated verification
 
-`npm run verify` passed for version 0.2.6:
+`npm run verify` passed for version 0.2.7:
 
 - TypeScript strict checking and ESLint, including `eslint-plugin-obsidianmd` Community rules;
-- 65 tests in 9 files;
+- Knip dead-code and dependency analysis;
+- 68 tests in 10 files;
 - coverage: 88.08% statements, 73.34% branches, 87.87% functions, and 91.86% lines;
-- production Obsidian bundle: 893.4 KB;
-- production static adapter bundle: 804.3 KB;
+- production Obsidian bundle: 893.5 KB;
+- production static adapter bundle: 804.5 KB;
 - release-policy check: 21 languages and 8 runtime adapters;
-- npm package dry run: 7 files, 277.4 KB compressed.
+- npm package dry run: 7 files, 278.7 KB compressed.
 
 Additional repository checks passed:
 
@@ -25,12 +26,12 @@ Additional repository checks passed:
 The generated static adapter was served from `dist-site/` and inspected in a real browser:
 
 - the live Kotlin block reached `Ready` through Kotlin Playground 2.4.10;
-- **Run** returned `Hello from Obsidian!` and named the provider in Output;
+- **Run** returned `Hello from Community!` and named Kotlin Playground 2.4.10 in Output;
 - all 18 CLI-capable remote samples passed through current Wandbox, Kotlin Playground, and SwiftFiddle providers;
 - HTML and CSS rendered successfully in script-disabled preview frames, while Dart returned `dart-ok` through DartPad and its isolated execution frame;
 - desktop and 390 × 844 responsive layouts had no horizontal document overflow;
 - the mobile editor preserved numbered lines, syntax highlighting, and an accessible Run control;
-- the README GIF was captured from this real execution at 960 × 540, 5.5 seconds, and 143 KB;
+- the README GIF was built from this real execution at 1130 × 590, 5.4 seconds, and 648 KB;
 - the Community gallery preview was captured at its recommended 3:2 aspect ratio after a successful run;
 - the landing page mounts one featured runner at startup and defers the other 21 live examples until their disclosure is opened.
 

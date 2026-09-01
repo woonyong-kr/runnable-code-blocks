@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.7
+
+- Make Knip unused-code analysis part of the standard release gate and remove the unused public `RemoteAdapterId` type export it exposed.
+- Move stored-setting normalization out of the plugin lifecycle, preserving the old `private-first` value through an explicit migration regression test.
+- Expand the Community overview with the exact Run lifecycle, adapter maintenance boundaries, compatibility, and support guidance.
+- Replace the public walkthrough with a real Ready → edit → Kotlin Playground output sequence captured from the deployed static adapter.
+
 ## 0.2.6
 
 - Replace extended system-font fallbacks in the static landing page with the shared interface-font token, removing the Obsidian 1.11.4 compatibility warning.

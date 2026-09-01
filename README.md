@@ -1,6 +1,13 @@
 # Runnable Code Blocks
 
 <p align="center">
+  <a href="obsidian://show-plugin?id=runnable-code-blocks"><img alt="Obsidian Community Plugin" src="https://img.shields.io/badge/Obsidian-Community_plugin-7C3AED?logo=obsidian" /></a>
+  <a href="https://github.com/woonyong-kr/runnable-code-blocks/actions/workflows/ci.yml"><img alt="Verify" src="https://github.com/woonyong-kr/runnable-code-blocks/actions/workflows/ci.yml/badge.svg" /></a>
+  <a href="https://github.com/woonyong-kr/runnable-code-blocks/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/woonyong-kr/runnable-code-blocks?sort=semver" /></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg" /></a>
+</p>
+
+<p align="center">
   <strong>Run code where you learn.</strong><br />
   Turn Markdown examples into temporary IntelliJ-inspired editors in Obsidian and static websites.
 </p>
@@ -23,6 +30,16 @@ Runnable Code Blocks keeps explanations, editable examples, and results in one n
 - **Disposable editing** — change and run a sample freely; reloading restores the Markdown source.
 - **Visible execution boundaries** — every result names the browser or third-party provider that actually ran it.
 
+## At a glance
+
+| What you need | What the plugin does |
+| --- | --- |
+| Learn beside an explanation | Replaces `run-<language>` fences with temporary editable runners in Reading view |
+| Keep Markdown portable | Stores only ordinary fenced code in the note; editor state and output are disposable |
+| Avoid hosting a backend | Uses four browser-native adapters and named public execution providers |
+| Publish the same lesson | Shares the parser, catalog, runner composition, editor, and output UI with the static adapter |
+| Understand the trust boundary | Labels the selected provider before execution and keeps remote execution configurable |
+
 ## Try it in 60 seconds
 
 1. Open [Runnable Code Blocks in Obsidian](obsidian://show-plugin?id=runnable-code-blocks), then install and enable it.
@@ -41,6 +58,17 @@ fun main() {
 
 The output appears directly beneath the code. **Reset** restores the current Markdown source; reloading the note discards all temporary edits.
 
+## What happens when you press Run
+
+1. The exact fence chooses one entry from the shared language catalog.
+2. The configured provider order selects a remote or browser-native adapter.
+3. A preflight checks whether execution can start and the header names the selected environment.
+4. The editor sends only the current temporary source to that adapter.
+5. Output, errors, duration, and provider details appear inline without modifying the note.
+6. Fallback is allowed only when the first adapter proves that execution never started.
+
+This last rule avoids running the same program twice after a timeout or an unknown remote result.
+
 ## Where it helps
 
 - Build programming notes that can be read and practiced in the same place.
@@ -52,7 +80,7 @@ The UI follows an IntelliJ New UI-inspired editor and tool-window hierarchy: lin
 
 ## Supported languages
 
-Version 0.2.6 defines the following stable fences. “Remote” means source is sent to the named provider; this project does not operate an execution server.
+Version 0.2.7 defines the following stable fences. “Remote” means source is sent to the named provider; this project does not operate an execution server.
 
 | Fence | Static web | Obsidian |
 | --- | --- | --- |
@@ -116,6 +144,32 @@ The browser adapter recognizes ordinary rendered Markdown:
 
 It shares the fence parser, language catalog, runner composition, editor, and output UI with the Obsidian plugin. No API key, database, Vercel function, Supabase project, or project-owned backend is required. The deployed adapter is available as a [live 21-language demo](https://woonyong-kr.github.io/runnable-code-blocks/).
 
+## Architecture and maintenance
+
+Provider-specific change is isolated from the stable UI and Markdown contract:
+
+- `src/supported-languages.ts` is the public support catalog and exact fence map;
+- `src/runner-composition.ts` defines provider order and fallback composition;
+- `src/runners/*-runner.ts` owns third-party URLs, request bodies, compiler selection, and response parsing;
+- `src/contracts.ts` owns the portable fence and execution-result contracts;
+- `src/editor.ts` and `src/ui.ts` own the IntelliJ-inspired editor and Output surface;
+- `src/web-adapter.ts` adapts rendered static Markdown without importing Obsidian.
+
+When a public provider changes, its adapter can be repaired and released without changing the Markdown syntax or the rest of the execution UI.
+
+## Installation and compatibility
+
+Install from **Settings → Community plugins → Browse → Runnable Code Blocks**. Version 0.2.7 supports Obsidian 1.13.0 or later on desktop and mobile.
+
+For a manual release install, download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/woonyong-kr/runnable-code-blocks/releases/latest) into `.obsidian/plugins/runnable-code-blocks/`, then reload Obsidian.
+
+## Support
+
+- Review [runtime providers](docs/runtime-providers.md) before reporting a provider outage.
+- Read the [changelog](CHANGELOG.md) and [verification evidence](docs/verification.md).
+- Open a [bug report](https://github.com/woonyong-kr/runnable-code-blocks/issues/new) with the language, provider label, exact output, and Obsidian version.
+- Review [Contributing](CONTRIBUTING.md) before submitting source changes.
+
 ## Development
 
 Requirements:
@@ -129,7 +183,7 @@ npm run verify
 npm run smoke:remote
 ```
 
-`npm run verify` runs TypeScript and ESLint checks, isolated tests with coverage, production builds, release-policy validation, and an npm package dry run. `npm run smoke:remote` intentionally submits the public sample programs to third-party providers, so results remain provider-dependent.
+`npm run verify` runs TypeScript and ESLint checks, Knip unused-code analysis, 68 isolated tests with coverage, production builds, release-policy validation, and an npm package dry run. `npm run smoke:remote` intentionally submits the public sample programs to third-party providers, so results remain provider-dependent.
 
 The build creates:
 

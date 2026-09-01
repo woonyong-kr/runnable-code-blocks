@@ -6,6 +6,7 @@ import type { RunnerRegistry } from "./runner-registry";
 import {
   DEFAULT_SETTINGS,
   RunnableCodeBlocksSettingTab,
+  normalizeSettings,
   type RunnableCodeBlocksSettings
 } from "./settings";
 import { mountRunnableBlock, type MountedRunnableBlock } from "./ui";
@@ -50,15 +51,7 @@ export default class RunnableCodeBlocksPlugin extends Plugin {
   }
 
   async loadSettings(): Promise<void> {
-    const stored = (await this.loadData()) as Record<string, unknown> | null;
-    this.settings = {
-      executionOrder: stored?.executionOrder === "browser-first" || stored?.executionOrder === "private-first"
-        ? "browser-first"
-        : DEFAULT_SETTINGS.executionOrder,
-      remoteExecutionEnabled: typeof stored?.remoteExecutionEnabled === "boolean"
-        ? stored.remoteExecutionEnabled
-        : DEFAULT_SETTINGS.remoteExecutionEnabled
-    };
+    this.settings = normalizeSettings(await this.loadData());
   }
 
   async saveSettings(): Promise<void> {
