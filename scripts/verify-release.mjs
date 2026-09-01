@@ -60,7 +60,7 @@ for (const file of [
   "dist-site/main.js",
   "dist-site/styles.css",
   "docs/assets/runnable-code-blocks-demo.gif",
-  "docs/assets/runnable-code-blocks-preview.jpg"
+  "docs/assets/runnable-code-blocks-preview.png"
 ]) {
   if ((await stat(file)).size === 0) errors.push(`${file} is empty`);
 }
@@ -70,6 +70,8 @@ for (const asset of releaseMedia.assets) {
   if (digest !== asset.sha256) errors.push(`${asset.path} hash does not match release-media.json`);
   if (!Number.isInteger(asset.width) || asset.width <= 0) errors.push(`${asset.path} has an invalid width`);
   if (!Number.isInteger(asset.height) || asset.height <= 0) errors.push(`${asset.path} has an invalid height`);
+  if (asset.width < 1600 || asset.height < 900) errors.push(`${asset.path} is too small`);
+  if (asset.width * 9 !== asset.height * 16) errors.push(`${asset.path} must use a 16:9 frame`);
 }
 for (const file of ["main.js", "dist-site/main.js"]) {
   if ((await stat(file)).size > 5_000_000) errors.push(`${file} exceeds the reviewed 5 MB bundle ceiling`);
@@ -102,6 +104,7 @@ if (!source.includes("executionState === \"not-started\"")) {
 }
 if (!readme.includes("does not access the filesystem")) errors.push("Community runtime boundary is not documented");
 if (!readme.includes("docs/assets/runnable-code-blocks-demo.gif")) errors.push("README does not show the real execution GIF");
+if (!readme.includes("docs/assets/runnable-code-blocks-preview.png")) errors.push("README does not show the sharp execution preview");
 if (!source.includes("script-src \\'none\\'")) errors.push("HTML/CSS previews must block scripts");
 const discoveredOrigins = [...source.matchAll(/https?:\/\/[A-Za-z0-9.-]+/gu)].map(([origin]) => origin);
 for (const origin of new Set(discoveredOrigins)) {

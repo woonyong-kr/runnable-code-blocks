@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.8
+
+- Replace every public visual with a public-safe 16:9 execution capture at 1600×900.
+- Recut the walkthrough around ready editor, temporary edit, and verified inline output so the Community page shows the real learning loop.
+- Require sharp 16:9 README media in the release gate and make the disposable-editing and provider boundary easier to understand.
+
 ## 0.2.7
 
 - Make Knip unused-code analysis part of the standard release gate and remove the unused public `RemoteAdapterId` type export it exposed.

@@ -1,6 +1,6 @@
 {
   "name": "runnable-code-blocks",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Run 21 Markdown code-block languages in Obsidian and static websites without hosting an execution server.",
   "main": "main.js",
   "type": "module",

@@ -22,7 +22,7 @@
 
 ![Runnable Code Blocks runs Kotlin inside an IntelliJ-inspired editor and shows the provider output inline.](docs/assets/runnable-code-blocks-demo.gif)
 
-Runnable Code Blocks keeps explanations, editable examples, and results in one note:
+Runnable Code Blocks keeps the explanation, the experiment, and the result in one note. Readers edit a temporary copy, press **Run**, and see exactly which browser or public provider produced the output; the Markdown source stays portable and unchanged.
 
 - **21 exact language fences** — Kotlin, JavaScript, TypeScript, Python, SQL, Java, C, C++, Go, Rust, and more.
 - **No execution server to host** — browser-native runners and named public providers work in Obsidian and the static adapter.
@@ -76,11 +76,13 @@ This last rule avoids running the same program twice after a timeout or an unkno
 - Let readers experiment without copying every snippet into a separate IDE.
 - Publish the same runnable Markdown through a static website adapter.
 
+![Runnable Code Blocks showing Kotlin source and its verified inline output in a sharp 16:9 Obsidian capture.](docs/assets/runnable-code-blocks-preview.png)
+
 The UI follows an IntelliJ New UI-inspired editor and tool-window hierarchy: line numbers, Darcula syntax colors, a compact Run action, named provider status, and inline Output. Editors grow through 100 source lines plus two numbered editing lines before their own scrollbar appears.
 
 ## Supported languages
 
-Version 0.2.7 defines the following stable fences. “Remote” means source is sent to the named provider; this project does not operate an execution server.
+Version 0.2.8 defines the following stable fences. “Remote” means source is sent to the named provider; this project does not operate an execution server.
 
 | Fence | Static web | Obsidian |
 | --- | --- | --- |
@@ -159,7 +161,7 @@ When a public provider changes, its adapter can be repaired and released without
 
 ## Installation and compatibility
 
-Install from **Settings → Community plugins → Browse → Runnable Code Blocks**. Version 0.2.7 supports Obsidian 1.13.0 or later on desktop and mobile.
+Install from **Settings → Community plugins → Browse → Runnable Code Blocks**. Version 0.2.8 supports Obsidian 1.13.0 or later on desktop and mobile.
 
 For a manual release install, download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/woonyong-kr/runnable-code-blocks/releases/latest) into `.obsidian/plugins/runnable-code-blocks/`, then reload Obsidian.
 
