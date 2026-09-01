@@ -5,6 +5,7 @@
 - Remove CodeMirror's nested focus outline so the editor no longer looks like a selected region while typing.
 - Replace the low-resolution Community walkthrough with a public-safe 1600×900 Obsidian PNG; a new execution GIF is intentionally deferred.
 - Lead the Community page with the real disposable editor while keeping the learning loop and provider boundary concise.
+- Keep the previous GIF file only as a temporary compatibility target for the Community page cache; it is no longer embedded by the current README.
 - Require sharp 16:9 README media in the release gate and make the disposable-editing and provider boundary easier to understand.
 
 ## 0.2.7
