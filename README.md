@@ -9,7 +9,7 @@
 
 <p align="center">
   <strong>Run code where you learn.</strong><br />
-  Turn Markdown examples into temporary IntelliJ-inspired editors in Obsidian and static websites.
+  Turn Markdown examples into temporary, theme-aware editors in Obsidian and static websites.
 </p>
 
 <p align="center">
@@ -116,40 +116,40 @@ This last rule avoids running the same program twice after a timeout or an unkno
 - Let readers experiment without copying every snippet into a separate IDE.
 - Publish the same runnable Markdown through a static website adapter.
 
-The UI follows an IntelliJ New UI-inspired editor and tool-window hierarchy: line numbers, Darcula syntax colors, a compact Run action, named provider status, and inline Output. Editors grow through 100 source lines plus two numbered editing lines before their own scrollbar appears.
+The UI follows the active Obsidian theme through semantic interface and `--code-*` tokens: line numbers, a compact Run action, named provider status, and inline Output. Static hosts use the same component and runner code while supplying only their own theme variables. Editors grow through 100 source lines plus two numbered editing lines before their own scrollbar appears.
 
 ![Interactive HTML, CSS, and JavaScript running in an isolated browser preview.](docs/assets/runnable-web-preview.png)
 
 ## Supported languages
 
-Version 0.4.0 defines the following stable fences. “Remote” means source is sent to the named provider; this project does not operate an execution server.
+Version 0.5.0 defines the following stable fences. “Remote” means source is sent to the named provider; this project does not operate an execution server.
 
-| Fence | Static web | Obsidian |
-| --- | --- | --- |
-| `run-javascript` | Wandbox → Web Worker | Wandbox → Web Worker |
-| `run-typescript` | Wandbox → browser transpile/Worker | Wandbox → browser transpile/Worker |
-| `run-python` | Wandbox | Wandbox |
-| `run-sql` | Wandbox SQLite | Wandbox SQLite |
-| `run-html` | Sandboxed preview iframe | Sandboxed preview iframe |
-| `run-css` | Sandboxed preview iframe | Sandboxed preview iframe |
-| `run-web` | Interactive isolated iframe | Interactive isolated iframe |
-| `run-web-ts` | Sucrase → interactive isolated iframe | Sucrase → interactive isolated iframe |
-| `run-react` | Bundled React + Sucrase → isolated iframe | Bundled React + Sucrase → isolated iframe |
-| `run-kotlin` | Kotlin Playground | Kotlin Playground |
-| `run-java` | Wandbox | Wandbox |
-| `run-c` | Wandbox | Wandbox |
-| `run-cpp` | Wandbox | Wandbox |
-| `run-go` | Wandbox | Wandbox |
-| `run-rust` | Wandbox | Wandbox |
-| `run-csharp` | Wandbox | Wandbox |
-| `run-swift` | SwiftFiddle | SwiftFiddle |
-| `run-ruby` | Wandbox | Wandbox |
-| `run-php` | Wandbox | Wandbox |
-| `run-r` | Wandbox | Wandbox |
-| `run-scala` | Wandbox | Wandbox |
-| `run-dart` | DartPad compile API → isolated frame | DartPad compile API → isolated frame |
-| `run-lua` | Wandbox | Wandbox |
-| `run-shell` | Wandbox | Wandbox |
+| Fence | Runtime |
+| --- | --- |
+| `run-javascript` | Wandbox → Web Worker |
+| `run-typescript` | Wandbox → browser transpile |
+| `run-python` | Wandbox |
+| `run-sql` | Wandbox |
+| `run-html` | Sandboxed preview iframe |
+| `run-css` | Sandboxed preview iframe |
+| `run-web` | Interactive isolated iframe |
+| `run-web-ts` | Sucrase → interactive isolated iframe |
+| `run-react` | React + Sucrase → interactive isolated iframe |
+| `run-kotlin` | Kotlin Playground |
+| `run-java` | Wandbox |
+| `run-c` | Wandbox |
+| `run-cpp` | Wandbox |
+| `run-go` | Wandbox |
+| `run-rust` | Wandbox |
+| `run-csharp` | Wandbox |
+| `run-swift` | SwiftFiddle |
+| `run-ruby` | Wandbox |
+| `run-php` | Wandbox |
+| `run-r` | Wandbox |
+| `run-scala` | Wandbox |
+| `run-dart` | DartPad compile → isolated frame |
+| `run-lua` | Wandbox |
+| `run-shell` | Wandbox |
 
 ## Execution and privacy
 
@@ -157,11 +157,12 @@ Code runs only after **Run** or the keyboard shortcut. Treat every runnable bloc
 
 - Remote execution is enabled and remote-first by default so the same Markdown works on a static deployment.
 - Settings can choose browser-first or disable remote execution. With remote execution disabled, JavaScript, TypeScript, HTML, CSS, Web, Web TypeScript, and React remain browser-native.
-- JavaScript and transpiled TypeScript run in a fresh Web Worker with common network globals blocked, a five-second timeout, and termination after every run.
+- JavaScript and transpiled TypeScript run in a fresh disposable Web Worker with a five-second timeout. Common direct network globals are shadowed, but the Worker is a lifecycle boundary rather than a security sandbox; run only code you trust.
 - HTML and CSS render in a sandboxed, script-disabled iframe with a restrictive Content Security Policy. CSS is applied to a reusable card, button, and text specimen.
 - Interactive `run-web` documents may use inline HTML, CSS, and JavaScript inside a fresh opaque-origin iframe. `run-web-ts` transpiles `<script type="text/typescript">` blocks before using the same sandbox.
 - `run-react` transpiles a self-contained JSX or TSX module with Sucrase and mounts its default export with bundled React and ReactDOM. Only `react`, `react-dom`, and `react-dom/client` imports are available; no package is downloaded while running a note.
 - All interactive previews block Fetch/XHR/WebSocket calls, subresource loading, forms, popups, top navigation, objects, and same-origin access.
+- Interactive DOM previews share Obsidian's renderer process. A script that blocks the event loop, such as `while (true) {}`, cannot be force-stopped by the plugin; close or reload the affected view and run only trusted examples.
 - Kotlin Playground, Wandbox, SwiftFiddle, and DartPad receive source only when their adapter is selected.
 - The Community Plugin does not access the filesystem, spawn local processes, install runtimes, or modify `PATH`.
 
@@ -201,14 +202,14 @@ Provider-specific change is isolated from the stable UI and Markdown contract:
 - `src/runner-composition.ts` defines provider order and fallback composition;
 - `src/runners/*-runner.ts` owns third-party URLs, request bodies, compiler selection, and response parsing;
 - `src/contracts.ts` owns the portable fence and execution-result contracts;
-- `src/editor.ts` and `src/ui.ts` own the IntelliJ-inspired editor and Output surface;
+- `src/editor.ts` and `src/ui.ts` own the host-theme-aware editor and Output surface;
 - `src/web-adapter.ts` adapts rendered static Markdown without importing Obsidian.
 
 When a public provider changes, its adapter can be repaired and released without changing the Markdown syntax or the rest of the execution UI.
 
 ## Installation and compatibility
 
-Install from **Settings → Community plugins → Browse → Runnable Code Blocks**. Version 0.4.0 supports Obsidian 1.13.0 or later on desktop and mobile.
+Install from **Settings → Community plugins → Browse → Runnable Code Blocks**. Version 0.5.0 supports Obsidian 1.13.0 or later on desktop and mobile.
 
 For a manual release install, download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/woonyong-kr/obsidian-runnable-code-blocks/releases/latest) into `.obsidian/plugins/runnable-code-blocks/`, then reload Obsidian.
 
@@ -232,7 +233,7 @@ npm run verify
 npm run smoke:remote
 ```
 
-`npm run verify` runs TypeScript and ESLint checks, Knip unused-code analysis, 79 isolated tests with coverage, production builds, release-policy validation, and an npm package dry run. `npm run smoke:remote` intentionally submits the public sample programs to third-party providers, so results remain provider-dependent.
+`npm run verify` runs TypeScript and ESLint checks, Knip unused-code analysis, the covered unit suite, a fresh Chromium E2E build, release-policy validation, and an npm package dry run. `npm run smoke:remote` intentionally submits the public sample programs to third-party providers, so results remain provider-dependent.
 
 The build creates:
 

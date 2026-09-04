@@ -1,15 +1,17 @@
-import type { CodeRunner } from "./contracts";
+import type { CodeRunner, RunContext } from "./contracts";
+import { createRemoteRunner } from "./remote-runner-factory";
 import { RunnerRegistry, UnavailableRunner } from "./runner-registry";
 import { BrowserPreviewRunner } from "./runners/browser-preview-runner";
-import { DartPadRunner } from "./runners/dartpad-runner";
 import { FallbackRunner } from "./runners/fallback-runner";
 import type { FetchLike } from "./runners/http-client";
 import { BrowserJavaScriptRunner } from "./runners/javascript-runner";
-import { KotlinPlaygroundRunner } from "./runners/kotlin-playground-runner";
 import { BrowserTypeScriptRunner } from "./runners/typescript-runner";
-import { SwiftFiddleRunner } from "./runners/swiftfiddle-runner";
-import { WandboxRunner } from "./runners/wandbox-runner";
-import { SUPPORTED_LANGUAGES, type SupportedLanguage } from "./supported-languages";
+import { ProviderUnavailableError } from "./runners/provider-errors";
+import {
+  SUPPORTED_LANGUAGES,
+  type BrowserAdapterId,
+  type SupportedLanguage
+} from "./supported-languages";
 
 export type ExecutionOrder = "browser-first" | "remote-first";
 
@@ -19,19 +21,87 @@ export interface RunnerCompositionOptions {
   remoteExecutionEnabled?: boolean;
 }
 
-export function createRunnerRegistry(options: RunnerCompositionOptions = {}): RunnerRegistry {
+export type RunnerCompositionOptionsSource =
+  | RunnerCompositionOptions
+  | (() => RunnerCompositionOptions);
+
+export function createRunnerRegistry(options: RunnerCompositionOptionsSource = {}): RunnerRegistry {
   const registry = new RunnerRegistry();
   for (const language of SUPPORTED_LANGUAGES) {
-    registry.register(language.id, () => composeLanguageRunner(language, options));
+    registry.register(language.id, () => typeof options === "function"
+      ? new PolicyAwareRunner(language, options)
+      : composeLanguageRunner(language, options));
   }
   return registry;
+}
+
+class PolicyAwareRunner implements CodeRunner {
+  readonly language: string;
+  readonly #definition: SupportedLanguage;
+  readonly #options: () => RunnerCompositionOptions;
+  #policy: RunnerCompositionOptions | null = null;
+  #runner: CodeRunner | null = null;
+  #ready: CodeRunner | null = null;
+
+  constructor(definition: SupportedLanguage, options: () => RunnerCompositionOptions) {
+    this.language = definition.id;
+    this.#definition = definition;
+    this.#options = options;
+  }
+
+  get environment(): CodeRunner["environment"] {
+    return this.#current().environment;
+  }
+
+  async availability() {
+    const runner = this.#current();
+    const status = await runner.availability();
+    this.#ready = status.available && runner === this.#runner ? runner : null;
+    return status;
+  }
+
+  async run(code: string, context?: RunContext) {
+    const runner = this.#current();
+    if (this.#ready !== runner) {
+      const status = await runner.availability();
+      if (!status.available) {
+        throw new ProviderUnavailableError(status.detail, "not-started");
+      }
+    }
+    this.#ready = null;
+    return await runner.run(code, context);
+  }
+
+  dispose(): void {
+    this.#runner?.dispose?.();
+    this.#runner = null;
+    this.#policy = null;
+    this.#ready = null;
+  }
+
+  #current(): CodeRunner {
+    const policy = this.#options();
+    if (this.#runner === null || this.#policy === null || !samePolicy(this.#policy, policy)) {
+      this.#runner?.dispose?.();
+      this.#runner = composeLanguageRunner(this.#definition, policy);
+      this.#policy = { ...policy };
+      this.#ready = null;
+    }
+    return this.#runner;
+  }
+}
+
+function samePolicy(left: RunnerCompositionOptions, right: RunnerCompositionOptions): boolean {
+  return left.executionOrder === right.executionOrder &&
+    left.fetch === right.fetch &&
+    left.remoteExecutionEnabled === right.remoteExecutionEnabled;
 }
 
 export function composeLanguageRunner(
   language: SupportedLanguage,
   options: RunnerCompositionOptions = {}
 ): CodeRunner {
-  const remote = options.remoteExecutionEnabled === false ? null : remoteRunner(language, options.fetch);
+  const remote = options.remoteExecutionEnabled === false ? null : createRemoteRunner(language, options.fetch);
   const browser = browserRunners(language);
   const ordered = options.executionOrder === "browser-first"
     ? [...browser, ...(remote === null ? [] : [remote])]
@@ -47,36 +117,18 @@ export function composeLanguageRunner(
   return ordered.length === 1 && only !== undefined ? only : new FallbackRunner(language.id, ordered);
 }
 
-function remoteRunner(language: SupportedLanguage, fetch_?: FetchLike): CodeRunner | null {
-  switch (language.remoteAdapter) {
-    case "browser-preview":
-      return null;
-    case "dartpad":
-      return new DartPadRunner({ fetch: fetch_ });
-    case "kotlin-playground":
-      return new KotlinPlaygroundRunner({ fetch: fetch_ });
-    case "swiftfiddle":
-      return new SwiftFiddleRunner({ fetch: fetch_ });
-    case "wandbox":
-      return language.wandboxLanguage === undefined
-        ? null
-        : new WandboxRunner({ fetch: fetch_, language: language.id, remoteLanguage: language.wandboxLanguage });
-  }
+function browserRunners(language: SupportedLanguage): CodeRunner[] {
+  return language.browserAdapter === undefined
+    ? []
+    : [BROWSER_FACTORIES[language.browserAdapter]()];
 }
 
-function browserRunners(language: SupportedLanguage): CodeRunner[] {
-  switch (language.id) {
-    case "javascript":
-      return [new BrowserJavaScriptRunner()];
-    case "typescript":
-      return [new BrowserTypeScriptRunner()];
-    case "html":
-    case "css":
-    case "react":
-    case "web":
-    case "web-ts":
-      return [new BrowserPreviewRunner(language.id)];
-    default:
-      return [];
-  }
-}
+const BROWSER_FACTORIES: Record<BrowserAdapterId, () => CodeRunner> = {
+  "css-preview": () => new BrowserPreviewRunner("css"),
+  "html-preview": () => new BrowserPreviewRunner("html"),
+  "javascript-worker": () => new BrowserJavaScriptRunner(),
+  "react-preview": () => new BrowserPreviewRunner("react"),
+  "typescript-worker": () => new BrowserTypeScriptRunner(),
+  "web-preview": () => new BrowserPreviewRunner("web"),
+  "web-ts-preview": () => new BrowserPreviewRunner("web-ts")
+};

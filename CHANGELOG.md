@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0
+
+- Replace the fixed IntelliJ/Darcula palette with Obsidian semantic theme tokens while keeping one shared component and runner implementation for Obsidian and static hosts.
+- Extract the declarative language catalog, remote runner factory, native DOM helpers, execution cancellation, and bounded output into focused boundaries so provider changes remain adapter-local.
+- Wait for interactive previews to become ready before reporting success, reject malformed provider responses, prevent duplicate Dart execution, and refresh mounted availability immediately after privacy-setting changes.
+- Add actual Chromium gates for editing and Reset, React interaction and `react-dom` portals, live host-token changes, keyboard focus, 102/103-line scrolling, sandbox navigation containment, and real Worker output truncation.
+- Regenerate the sharp 1600×900 screenshots and GIF from the current static adapter through a repeatable capture script.
+
 ## 0.4.0
 
 - Add `run-react` for self-contained React components written in JSX or TSX, with hooks, events, fragments, and automatic root mounting.

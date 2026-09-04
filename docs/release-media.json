@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.5.0",
   "capturedWith": "Static web adapter rendered in Chromium",
   "capturedAt": "2026-09-05",
   "publicSafeSample": true,
@@ -8,19 +8,19 @@
       "path": "docs/assets/runnable-code-blocks-demo.gif",
       "width": 1600,
       "height": 900,
-      "sha256": "43cff8c1b3c96e2e9d1a0200ac170739f0f85571071a6ede7f49475ec3987436"
+      "sha256": "7783f853c8c1971ba3a32cd3633200e7b2d1c90bd2e93a58c5cba112f4786026"
     },
     {
       "path": "docs/assets/runnable-code-blocks-preview.png",
       "width": 1600,
       "height": 900,
-      "sha256": "8b4952ae65e2bc252ac7c5d9eb681259dfd110de62cfb96e20ab85a2849bb659"
+      "sha256": "061ee223222a36cb675097a2e18562487340c12f6276e8273768e894bc2d4ff4"
     },
     {
       "path": "docs/assets/runnable-web-preview.png",
       "width": 1600,
       "height": 900,
-      "sha256": "1b2821f01d83e44148dd55bb7229aa20eb9689ee89586213ea0d1cb878159b8b"
+      "sha256": "156077a0aba33818afb42757d798249c3a1cc55634ac16e84bc4c189ff8c841f"
     }
   ]
 }

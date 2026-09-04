@@ -29,10 +29,15 @@ const imageDimensions = (data, path) => {
   return { width: 0, height: 0 };
 };
 
-const supportedLanguages = [
-  "javascript", "typescript", "python", "sql", "html", "css", "web", "web-ts", "react", "kotlin", "java", "c", "cpp",
-  "go", "rust", "csharp", "swift", "ruby", "php", "r", "scala", "dart", "lua", "shell"
-];
+const { stdout: supportedLanguageJson } = await run("node_modules/.bin/tsx", [
+  "--eval",
+  'import { SUPPORTED_LANGUAGES } from "./src/supported-languages.ts"; console.log(JSON.stringify(SUPPORTED_LANGUAGES.map(({ id }) => id)));'
+]);
+const supportedLanguages = JSON.parse(supportedLanguageJson);
+const supportedSection = readme.match(/^## Supported languages\n([\s\S]*?)(?=^## )/mu)?.[1] ?? "";
+const documentedFences = [...supportedSection.matchAll(/^\| `(run-[a-z][a-z0-9+#-]*)` \|/gmu)]
+  .map(([, fence]) => fence);
+const expectedFences = supportedLanguages.map((language) => `run-${language}`);
 const requiredAdapters = [
   "src/runners/browser-preview-runner.ts",
   "src/runners/dartpad-runner.ts",
@@ -70,6 +75,7 @@ for (const file of [
   "styles.css",
   "dist-site/index.html",
   "dist-site/main.js",
+  "dist-site/plugin.css",
   "dist-site/styles.css",
   "docs/assets/runnable-code-blocks-preview.png"
 ]) {
@@ -102,11 +108,8 @@ if (!styles.includes(".cm-editor.cm-focused > .cm-scroller")) {
 if (/-apple-system|BlinkMacSystemFont/u.test(styles)) {
   errors.push("styles.css uses extended system fonts unsupported by the minimum Obsidian version");
 }
-for (const language of supportedLanguages) {
-  if (!readme.includes(`run-${language}`)) errors.push(`README does not document run-${language}`);
-  if (!sourceByFile.get("src/supported-languages.ts")?.includes(`language("${language}"`)) {
-    errors.push(`supported-language catalog is missing ${language}`);
-  }
+if (JSON.stringify(documentedFences) !== JSON.stringify(expectedFences)) {
+  errors.push("README supported-language table must match the catalog exactly and without duplicates");
 }
 for (const file of requiredAdapters) {
   if (!sourceByFile.has(file)) errors.push(`required adapter is missing: ${file}`);

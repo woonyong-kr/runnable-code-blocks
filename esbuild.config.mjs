@@ -33,5 +33,6 @@ await esbuild.build({
 });
 await Promise.all([
   copyFile("site/index.html", "dist-site/index.html"),
-  copyFile("styles.css", "dist-site/styles.css"),
+  copyFile("styles.css", "dist-site/plugin.css"),
+  copyFile("site/styles.css", "dist-site/styles.css"),
 ]);

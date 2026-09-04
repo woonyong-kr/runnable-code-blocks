@@ -34,5 +34,12 @@ export default tseslint.config(
       "@typescript-eslint/no-unnecessary-condition": "off"
     }
   },
+  {
+    files: ["src/dom.ts"],
+    rules: {
+      // Shared browser/Obsidian code must not depend on Obsidian's prototype helpers.
+      "obsidianmd/prefer-create-el": "off"
+    }
+  },
   { ignores: ["main.js", "node_modules", "coverage", "dist-site", "scripts/*.mjs"] }
 );

@@ -53,7 +53,9 @@ describe("BrowserJavaScriptRunner", () => {
 
     expect(result).toEqual({
       durationMs: 3.4,
+      environment: "browser",
       exitCode: 0,
+      provider: "Web Worker",
       stderr: "",
       stdout: "2, 4, 6"
     });
@@ -61,20 +63,17 @@ describe("BrowserJavaScriptRunner", () => {
     expect(revoke).toHaveBeenCalledWith("blob:test-worker");
   });
 
-  it("rejects dynamic imports before creating a worker", async () => {
-    const workerFactory = vi.fn();
+  it("does not reject harmless strings that contain import syntax", async () => {
+    const worker = new RespondingWorker();
+    const workerFactory = vi.fn(() => worker);
     const runner = new BrowserJavaScriptRunner({
       workerFactory,
-      urlFactory: () => "blob:unused",
+      urlFactory: () => "blob:string-literal",
       urlRevoke: () => undefined
     });
 
-    await expect(runner.run('await import("https://example.com/module.js")')).resolves.toMatchObject({
-      environment: "browser",
-      exitCode: 1,
-      stderr: expect.stringContaining("Dynamic import")
-    });
-    expect(workerFactory).not.toHaveBeenCalled();
+    await expect(runner.run('console.log("import(")')).resolves.toMatchObject({ exitCode: 0 });
+    expect(workerFactory).toHaveBeenCalledOnce();
   });
 
   it("terminates code that exceeds the execution timeout", async () => {
@@ -113,5 +112,55 @@ describe("BrowserJavaScriptRunner", () => {
     });
     expect(worker.terminated).toBe(true);
     expect(revoke).toHaveBeenCalledWith("blob:error");
+  });
+
+  it("revokes the Blob URL when worker construction fails", async () => {
+    const revoke = vi.fn();
+    const runner = new BrowserJavaScriptRunner({
+      workerFactory: () => { throw new Error("constructor failed"); },
+      urlFactory: () => "blob:constructor-error",
+      urlRevoke: revoke
+    });
+
+    await expect(runner.run("code")).resolves.toMatchObject({ exitCode: 1, stderr: "constructor failed" });
+    expect(revoke).toHaveBeenCalledOnce();
+  });
+
+  it("terminates and revokes when postMessage fails", async () => {
+    const worker = new RespondingWorker();
+    worker.postMessage = () => { throw new Error("post failed"); };
+    const revoke = vi.fn();
+    const runner = new BrowserJavaScriptRunner({
+      workerFactory: () => worker,
+      urlFactory: () => "blob:post-error",
+      urlRevoke: revoke
+    });
+
+    await expect(runner.run("code")).resolves.toMatchObject({ exitCode: 1, stderr: "post failed" });
+    expect(worker.terminated).toBe(true);
+    expect(revoke).toHaveBeenCalledOnce();
+  });
+
+  it("cancels an active worker through both AbortSignal and runner disposal", async () => {
+    const first = new RespondingWorker();
+    first.postMessage = () => undefined;
+    const second = new RespondingWorker();
+    second.postMessage = () => undefined;
+    const workers = [first, second];
+    const runner = new BrowserJavaScriptRunner({
+      workerFactory: () => workers.shift() ?? new RespondingWorker(),
+      urlFactory: () => `blob:${String(workers.length)}`,
+      urlRevoke: () => undefined
+    });
+    const controller = new AbortController();
+    const aborted = runner.run("code", { signal: controller.signal });
+    controller.abort();
+    await expect(aborted).resolves.toMatchObject({ exitCode: 130 });
+    expect(first.terminated).toBe(true);
+
+    const disposed = runner.run("code");
+    runner.dispose();
+    await expect(disposed).resolves.toMatchObject({ exitCode: 130 });
+    expect(second.terminated).toBe(true);
   });
 });

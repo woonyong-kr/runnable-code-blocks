@@ -21,11 +21,15 @@ export interface RunResult {
   stdout: string;
 }
 
+export interface RunContext {
+  signal?: AbortSignal;
+}
+
 export interface CodeRunner {
   readonly environment: RunnerEnvironment;
   readonly language: string;
   availability(): Promise<RunnerAvailability>;
-  run(code: string): Promise<RunResult>;
+  run(code: string, context?: RunContext): Promise<RunResult>;
   dispose?(): void;
 }
 

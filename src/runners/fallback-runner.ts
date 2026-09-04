@@ -1,10 +1,11 @@
-import type { CodeRunner, RunResult, RunnerAvailability, RunnerEnvironment } from "../contracts";
+import type { CodeRunner, RunContext, RunResult, RunnerAvailability, RunnerEnvironment } from "../contracts";
 import { ProviderUnavailableError } from "./provider-errors";
 
 export class FallbackRunner implements CodeRunner {
   readonly environment: RunnerEnvironment;
   readonly language: string;
   readonly #runners: readonly CodeRunner[];
+  #selectedRunner: CodeRunner | null = null;
 
   constructor(language: string, runners: readonly CodeRunner[]) {
     if (runners.length === 0) throw new Error(`At least one runner is required for ${language}`);
@@ -14,47 +15,49 @@ export class FallbackRunner implements CodeRunner {
   }
 
   async availability(): Promise<RunnerAvailability> {
-    const statuses: Array<{ available: boolean; detail: string; runner: CodeRunner }> = [];
+    const unavailable: string[] = [];
     for (const runner of this.#runners) {
       try {
         const status = await runner.availability();
-        statuses.push({ ...status, runner });
+        if (status.available) {
+          this.#selectedRunner = runner;
+          return {
+            available: true,
+            detail: `${runner.environment}: ${status.detail}`
+          };
+        }
+        unavailable.push(`${runner.environment}: ${status.detail}`);
       } catch (error) {
-        statuses.push({
-          available: false,
-          detail: error instanceof Error ? error.message : String(error),
-          runner
-        });
+        unavailable.push(`${runner.environment}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
-    const available = statuses.filter((status) => status.available);
-    return available.length > 0
-      ? {
-          available: true,
-          detail: `Auto: ${available.map(({ runner }) => runner.environment).join(" → ")}. 실행 전 provider 상태를 다시 확인합니다.`
-        }
-      : {
-          available: false,
-          detail: statuses.map(({ detail, runner }) => `${runner.environment}: ${detail}`).join(" / ")
-        };
+    this.#selectedRunner = null;
+    return { available: false, detail: unavailable.join(" / ") };
   }
 
-  async run(code: string): Promise<RunResult> {
+  async run(code: string, context?: RunContext): Promise<RunResult> {
     const skipped: string[] = [];
-    for (const runner of this.#runners) {
-      let status: RunnerAvailability;
-      try {
-        status = await runner.availability();
-      } catch (error) {
-        skipped.push(`${runner.environment}: ${error instanceof Error ? error.message : String(error)}`);
-        continue;
+    const selected = this.#selectedRunner;
+    const candidates = selected === null
+      ? this.#runners
+      : [selected, ...this.#runners.filter((runner) => runner !== selected)];
+    this.#selectedRunner = null;
+    for (const runner of candidates) {
+      if (runner !== selected) {
+        let status: RunnerAvailability;
+        try {
+          status = await runner.availability();
+        } catch (error) {
+          skipped.push(`${runner.environment}: ${error instanceof Error ? error.message : String(error)}`);
+          continue;
+        }
+        if (!status.available) {
+          skipped.push(`${runner.environment}: ${status.detail}`);
+          continue;
+        }
       }
-      if (!status.available) {
-        skipped.push(`${runner.environment}: ${status.detail}`);
-        continue;
-      }
       try {
-        const result = await runner.run(code);
+        const result = await runner.run(code, context);
         return {
           ...result,
           environment: result.environment ?? runner.environment,
@@ -75,6 +78,7 @@ export class FallbackRunner implements CodeRunner {
   }
 
   dispose(): void {
+    this.#selectedRunner = null;
     for (const runner of this.#runners) runner.dispose?.();
   }
 }

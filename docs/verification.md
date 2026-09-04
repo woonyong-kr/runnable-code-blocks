@@ -6,16 +6,16 @@ The full remote sample sweep passed for all 18 CLI-backed language samples on 20
 
 ## Automated verification
 
-`npm run verify` passed for version 0.4.0:
+`npm run verify` passed for version 0.5.0:
 
 - TypeScript strict checking and ESLint, including `eslint-plugin-obsidianmd` Community rules;
 - Knip dead-code and dependency analysis;
-- 79 tests in 10 files;
-- coverage: 86.54% statements, 71.62% branches, 86.52% functions, and 90.40% lines;
-- production Obsidian bundle: 1.1 MB;
-- production static adapter bundle: 1003.2 KB;
+- the complete covered unit suite;
+- fresh-build Chromium E2E checks for editing and Reset, React interaction, host theme tokens, keyboard focus, the 102/103-line scroll boundary, and preview navigation containment;
+- coverage exceeds the enforced 80% statement/line, 70% branch, and 75% function thresholds;
+- both production bundles remain below the reviewed 5 MB release ceiling;
 - release-policy check: 24 runnable fences and 8 runtime adapters;
-- npm package dry run: 7 files, 342.5 KB compressed.
+- npm package dry run contains only the 7 declared release files.
 
 Additional repository checks passed:
 
@@ -56,4 +56,4 @@ The generated static adapter was served from `dist-site/` and inspected in a rea
 
 ## Remaining external limits
 
-Wandbox, Kotlin Playground, SwiftFiddle, and DartPad are independent public services. Their endpoints, compiler inventory, limits, CORS behavior, and availability can change without a plugin release. Browser JavaScript and TypeScript execution blocks common network globals and terminates its Worker after a timeout, but runnable code should still be treated as trusted executable content from the note.
+Wandbox, Kotlin Playground, SwiftFiddle, and DartPad are independent public services. Their endpoints, compiler inventory, limits, CORS behavior, and availability can change without a plugin release. Browser JavaScript and TypeScript execution shadows common direct network globals and terminates its Worker after a timeout, but generated code can still reach browser capabilities; the Worker is not a security sandbox. Interactive DOM previews use a restrictive opaque-origin frame, but code that blocks the renderer event loop cannot be force-stopped from that same renderer. Every runnable block must therefore be treated as trusted executable content from the note.

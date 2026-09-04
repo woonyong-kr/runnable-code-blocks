@@ -1,7 +1,7 @@
 node_modules/
 coverage/
 dist-site/
+test-results/
 main.js
 *.log
 .DS_Store
-

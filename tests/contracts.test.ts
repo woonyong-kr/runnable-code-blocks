@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fenceForLanguage, parseRunnableFence } from "../src/contracts";
 import {
-  SUPPORTED_LANGUAGES,
-  supportedLanguagesDescription
+  SUPPORTED_LANGUAGES
 } from "../src/supported-languages";
 
 describe("runnable fence contract", () => {
@@ -30,8 +29,5 @@ describe("runnable fence contract", () => {
       remoteAdapter: "kotlin-playground"
     });
     expect(SUPPORTED_LANGUAGES.filter(({ remoteAdapter }) => remoteAdapter === "wandbox")).toHaveLength(16);
-    expect(supportedLanguagesDescription()).toContain("JavaScript — Obsidian: Wandbox → Web Worker");
-    expect(supportedLanguagesDescription()).toContain("Kotlin — Obsidian: Kotlin Playground");
-    expect(supportedLanguagesDescription()).toContain("React (JSX/TSX) — Obsidian: React + Sucrase");
   });
 });

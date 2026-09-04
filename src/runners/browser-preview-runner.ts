@@ -1,6 +1,8 @@
 import { getVersion, transform } from "sucrase";
 import reactRuntime from "virtual:react-runtime";
 import type { CodeRunner, RunResult } from "../contracts";
+import { appendElement } from "../dom";
+import { OUTPUT_LIMITS } from "../output-buffer";
 
 type PreviewLanguage = "css" | "html" | "react" | "web" | "web-ts";
 
@@ -53,12 +55,28 @@ const INTERACTIVE_BASE_STYLE = String.raw`<style>
 
 const CONSOLE_BRIDGE = String.raw`${INTERACTIVE_BASE_STYLE}<script>
 (() => {
+  const entryLimit = ${OUTPUT_LIMITS.entries};
+  const characterLimit = ${OUTPUT_LIMITS.characters};
+  const marker = ${JSON.stringify(OUTPUT_LIMITS.marker)};
+  let entries = 0;
+  let characters = 0;
+  let truncated = false;
   const format = (value) => {
     if (typeof value === "string") return value;
     if (typeof value === "undefined") return "undefined";
     try { return JSON.stringify(value, null, 2); } catch { return String(value); }
   };
-  const send = (type, message) => parent.postMessage({ sender: "runnable-code-blocks-preview", type, message }, "*");
+  const send = (type, message) => {
+    if (truncated) return;
+    if (entries >= entryLimit || characters + message.length > characterLimit) {
+      truncated = true;
+      parent.postMessage({ sender: "runnable-code-blocks-preview", type: "warn", message: marker }, "*");
+      return;
+    }
+    entries += 1;
+    characters += message.length;
+    parent.postMessage({ sender: "runnable-code-blocks-preview", type, message }, "*");
+  };
   for (const level of ["log", "info", "warn", "error"]) {
     const original = console[level].bind(console);
     console[level] = (...values) => {
@@ -77,9 +95,8 @@ const REACT_ROOT = '<div id="root"></div>';
 const REACT_MODULES = String.raw`
 const require = (specifier) => {
   if (specifier === "react") return runtime.React;
-  if (specifier === "react-dom" || specifier === "react-dom/client") {
-    return { createRoot: runtime.createRoot };
-  }
+  if (specifier === "react-dom") return runtime.ReactDOM;
+  if (specifier === "react-dom/client") return runtime.ReactDOMClient;
   throw new Error(
     "Unsupported import: " + specifier + ". run-react includes React and ReactDOM; use one self-contained example."
   );
@@ -197,7 +214,7 @@ function reactApplication(compiled: string): string {
   }
   const container = document.querySelector("#root");
   if (!container) throw new Error("React preview root is missing.");
-  runtime.createRoot(container).render(React.createElement(Component));
+  runtime.ReactDOMClient.createRoot(container).render(React.createElement(Component));
 })();
 </script>`;
 }
@@ -219,9 +236,20 @@ function previewResult(
 }
 
 function secureDocument(html: string, policy: string, prefix = ""): string {
-  const security = `<meta http-equiv="Content-Security-Policy" content="${policy}">${prefix}`;
-  if (/<head(?:\s|>)/iu.test(html)) return html.replace(/<head([^>]*)>/iu, `<head$1>${security}`);
-  return `<!doctype html><html><head>${security}</head><body>${html}</body></html>`;
+  const document_ = new DOMParser().parseFromString(html, "text/html");
+  const security = appendElement(document_.head, "meta");
+  security.setAttribute("http-equiv", "Content-Security-Policy");
+  security.setAttribute("content", policy);
+  if (prefix !== "") {
+    const trusted = new DOMParser().parseFromString(
+      `<!doctype html><html><head>${prefix}</head><body></body></html>`,
+      "text/html"
+    );
+    document_.head.prepend(security, ...trusted.head.childNodes);
+  } else {
+    document_.head.prepend(security);
+  }
+  return `<!doctype html>${document_.documentElement.outerHTML}`;
 }
 
 function transpileTypeScriptScripts(html: string): string {

@@ -1,13 +1,13 @@
 import { getVersion, transform } from "sucrase";
-import type { CodeRunner, RunResult } from "../contracts";
+import type { CodeRunner, RunContext, RunResult } from "../contracts";
 import { BrowserJavaScriptRunner } from "./javascript-runner";
 
 export class BrowserTypeScriptRunner implements CodeRunner {
   readonly environment = "browser" as const;
   readonly language = "typescript";
-  readonly #javascript: BrowserJavaScriptRunner;
+  readonly #javascript: Pick<CodeRunner, "availability" | "run">;
 
-  constructor(javascript = new BrowserJavaScriptRunner()) {
+  constructor(javascript: Pick<CodeRunner, "availability" | "run"> = new BrowserJavaScriptRunner()) {
     this.#javascript = javascript;
   }
 
@@ -15,7 +15,7 @@ export class BrowserTypeScriptRunner implements CodeRunner {
     return await this.#javascript.availability();
   }
 
-  async run(code: string): Promise<RunResult> {
+  async run(code: string, context?: RunContext): Promise<RunResult> {
     const started = performance.now();
     const provider = `Sucrase ${getVersion()} → Web Worker`;
     let javascript: string;
@@ -35,7 +35,7 @@ export class BrowserTypeScriptRunner implements CodeRunner {
         stdout: ""
       };
     }
-    const result = await this.#javascript.run(javascript);
+    const result = await this.#javascript.run(javascript, context);
     return {
       ...result,
       durationMs: performance.now() - started,

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { composeLanguageRunner, createRunnerRegistry } from "../src/runner-composition";
 import { SUPPORTED_LANGUAGES, supportedLanguage } from "../src/supported-languages";
 
@@ -58,5 +58,34 @@ describe("runner composition", () => {
     if (python === null) throw new Error("python missing");
     const runner = composeLanguageRunner(python, { remoteExecutionEnabled: false });
     await expect(runner.availability()).resolves.toMatchObject({ available: false });
+  });
+
+  it("applies a changed execution policy to runners that are already mounted", async () => {
+    const policy = { remoteExecutionEnabled: true };
+    const registry = createRunnerRegistry(() => policy);
+    const runner = registry.create("python");
+    if (runner === null) throw new Error("python runner missing");
+
+    policy.remoteExecutionEnabled = false;
+
+    await expect(runner.availability()).resolves.toMatchObject({ available: false });
+    await expect(runner.run("print('private')")).rejects.toThrow("provider");
+  });
+
+  it("uses one policy snapshot for remote preflight and execution", async () => {
+    const json = (value: unknown) => new Response(JSON.stringify(value), {
+      headers: { "Content-Type": "application/json" }
+    });
+    const fetch_ = vi.fn()
+      .mockResolvedValueOnce(json([{ language: "Python", name: "cpython-3.13.8", version: "3.13.8" }]))
+      .mockResolvedValueOnce(json({ program_output: "remote-ok\n", status: "0" }));
+    const registry = createRunnerRegistry(() => ({ fetch: fetch_ as typeof fetch }));
+    const runner = registry.create("python");
+    if (runner === null) throw new Error("python runner missing");
+
+    await expect(runner.run("print('remote-ok')")).resolves.toMatchObject({
+      provider: "Wandbox · cpython-3.13.8",
+      stdout: "remote-ok\n"
+    });
   });
 });

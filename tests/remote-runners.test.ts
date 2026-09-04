@@ -132,6 +132,15 @@ describe("WandboxRunner adapter", () => {
     await runner.availability();
     await expect(runner.run("code")).rejects.toMatchObject({ executionState: "not-started" });
   });
+
+  it("does not report a malformed successful HTTP response as completed code", async () => {
+    const fetch_ = vi.fn()
+      .mockResolvedValueOnce(json([{ language: "Python", name: "cpython-3.13.8", version: "3.13.8" }]))
+      .mockResolvedValueOnce(json({ program_output: 123, status: "0" }));
+    const runner = new WandboxRunner({ fetch: fetch_ as typeof fetch, language: "python", remoteLanguage: "Python" });
+    await runner.availability();
+    await expect(runner.run("print('once')")).rejects.toMatchObject({ executionState: "unknown" });
+  });
 });
 
 describe("KotlinPlaygroundRunner adapter", () => {
@@ -187,6 +196,15 @@ describe("KotlinPlaygroundRunner adapter", () => {
     await runner.availability();
     await expect(runner.run("code")).resolves.toMatchObject({ exitCode: 1, stderr: expect.stringContaining("warning") });
   });
+
+  it("does not report a malformed successful HTTP response as completed code", async () => {
+    const fetch_ = vi.fn()
+      .mockResolvedValueOnce(json([{ latestStable: true, version: "2.4.10" }]))
+      .mockResolvedValueOnce(json({ errors: { "File.kt": [null] }, exception: null, text: "" }));
+    const runner = new KotlinPlaygroundRunner({ fetch: fetch_ as typeof fetch });
+    await runner.availability();
+    await expect(runner.run("println(\"once\")")).rejects.toMatchObject({ executionState: "unknown" });
+  });
 });
 
 describe("DartPadRunner adapter", () => {
@@ -208,7 +226,7 @@ describe("DartPadRunner adapter", () => {
       provider: "DartPad · 3.13.2 → isolated frame",
       stdout: "dart-ok"
     });
-    expect(execute).toHaveBeenCalledWith("compiled-dart-javascript", 15_000);
+    expect(execute).toHaveBeenCalledWith("compiled-dart-javascript", 15_000, undefined);
     expect(JSON.parse(String(fetch_.mock.calls[1]?.[1]?.body))).toEqual({
       deltaDill: null,
       source: instrumentDartSource('void main() { print("dart-ok"); }')
@@ -313,11 +331,13 @@ describe("DartPadFrameExecutor", () => {
     }));
 
     send({ type: "ready" });
+    send({ type: "ready" });
     send({ message: "dart-ok", type: "stdout" });
     send({ type: "rcb-done" });
 
     await expect(pending).resolves.toMatchObject({ exitCode: 0, stderr: "", stdout: "dart-ok" });
     expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({ command: "execute" }), "*");
+    expect(postMessage).toHaveBeenCalledTimes(1);
     expect(frame?.isConnected).toBe(false);
   });
 
@@ -399,5 +419,12 @@ describe("SwiftFiddleRunner adapter", () => {
   it("reports failed preflight", async () => {
     const runner = new SwiftFiddleRunner({ fetch: vi.fn().mockRejectedValue(new Error("offline")) as typeof fetch });
     await expect(runner.availability()).resolves.toMatchObject({ available: false });
+  });
+
+  it("does not report an empty successful HTTP response as completed code", async () => {
+    const runner = new SwiftFiddleRunner({
+      fetch: vi.fn().mockResolvedValue(new Response("", { status: 200 })) as typeof fetch
+    });
+    await expect(runner.run("print(\"once\")")).rejects.toMatchObject({ executionState: "unknown" });
   });
 });

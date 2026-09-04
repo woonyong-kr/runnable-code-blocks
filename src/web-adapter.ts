@@ -1,6 +1,7 @@
 import { parseRunnableFence } from "./contracts";
 import { RunnerRegistry, UnavailableRunner } from "./runner-registry";
 import { mountRunnableBlock, type MountedRunnableBlock } from "./ui";
+import { appendElement } from "./dom";
 
 function fenceFromCodeElement(code: HTMLElement): string | null {
   for (const className of code.classList) {
@@ -22,7 +23,7 @@ export function enhanceRunnableCodeBlocks(
     if (pre === null) continue;
     const parent = pre.parentElement;
     if (parent === null) continue;
-    const host = parent.createDiv();
+    const host = appendElement(parent, "div");
     pre.replaceWith(host);
     const runner =
       registry.create(language) ??

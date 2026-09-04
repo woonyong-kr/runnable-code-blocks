@@ -33,7 +33,7 @@ describe("web adapter", () => {
     expect(document.querySelector(".rcb__language")?.textContent).toBe("javascript");
   });
 
-  it("runs edited code and resets to the Markdown source", async () => {
+  it("passes the Markdown source to the mounted runner", async () => {
     document.body.innerHTML = `<pre><code class="language-run-javascript">console.log("source")</code></pre>`;
     const run = vi.fn(async () => ({ durationMs: 2, exitCode: 0, stderr: "", stdout: "Hello" }));
     const registry = new RunnerRegistry().register("javascript", () => ({
@@ -42,13 +42,18 @@ describe("web adapter", () => {
     }));
 
     enhanceRunnableCodeBlocks(document, registry);
-    await Promise.resolve();
     const button = document.querySelector<HTMLButtonElement>(".rcb__button--run");
+    await vi.waitFor(() => {
+      expect(button?.disabled).toBe(false);
+    });
     button?.click();
-    await Promise.resolve();
-    await Promise.resolve();
+    await vi.waitFor(() => {
+      expect(run).toHaveBeenCalledOnce();
+    });
 
-    expect(run).toHaveBeenCalledWith('console.log("source")');
+    expect(run).toHaveBeenCalledWith('console.log("source")', {
+      signal: expect.any(AbortSignal) as AbortSignal
+    });
     expect(document.querySelector(".rcb__output")?.textContent).toBe("Hello");
   });
 

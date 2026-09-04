@@ -1,4 +1,6 @@
-import type { CodeRunner, RunResult, RunnerAvailability } from "../contracts";
+import type { CodeRunner, RunContext, RunResult, RunnerAvailability } from "../contracts";
+import { appendElement } from "../dom";
+import { BoundedOutput } from "../output-buffer";
 import { fetchWithTimeout, type FetchLike, unavailableFetch } from "./http-client";
 import { ProviderUnavailableError } from "./provider-errors";
 import { DART_DONE_MARKER, DART_ERROR_MARKER, instrumentDartSource } from "./dart-source-instrumentation";
@@ -22,7 +24,7 @@ export interface DartFrameExecution {
 }
 
 export interface DartFrameExecutor {
-  execute(compiledJavaScript: string, timeoutMs: number): Promise<DartFrameExecution>;
+  execute(compiledJavaScript: string, timeoutMs: number, signal?: AbortSignal): Promise<DartFrameExecution>;
 }
 
 export class DartPadRunner implements CodeRunner {
@@ -61,7 +63,7 @@ export class DartPadRunner implements CodeRunner {
     }
   }
 
-  async run(code: string): Promise<RunResult> {
+  async run(code: string, context?: RunContext): Promise<RunResult> {
     if (this.#version === null) {
       throw new ProviderUnavailableError("DartPad preflight가 완료되지 않았습니다.", "not-started");
     }
@@ -75,7 +77,8 @@ export class DartPadRunner implements CodeRunner {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ deltaDill: null, source: instrumentDartSource(code) })
         },
-        this.#timeoutMs
+        this.#timeoutMs,
+        context?.signal
       );
     } catch (error) {
       const detail = error instanceof Error ? error.message : String(error);
@@ -100,7 +103,7 @@ export class DartPadRunner implements CodeRunner {
       throw new ProviderUnavailableError("DartPad compile API가 JavaScript를 반환하지 않았습니다.", "not-started");
     }
     const executor = this.#executor ?? new DartPadFrameExecutor();
-    const result = await executor.execute(data.result, this.#timeoutMs);
+    const result = await executor.execute(data.result, this.#timeoutMs, context?.signal);
     return {
       ...result,
       environment: "remote",
@@ -116,12 +119,12 @@ export class DartPadFrameExecutor implements DartFrameExecutor {
     this.#frameUrl = frameUrl;
   }
 
-  async execute(compiledJavaScript: string, timeoutMs: number): Promise<DartFrameExecution> {
+  async execute(compiledJavaScript: string, timeoutMs: number, signal?: AbortSignal): Promise<DartFrameExecution> {
     if (typeof document === "undefined" || typeof window === "undefined") {
       throw new ProviderUnavailableError("DartPad browser frame에는 DOM이 필요합니다.", "not-started");
     }
     const started = performance.now();
-    const frame = document.body.createEl("iframe");
+    const frame = appendElement(document.body, "iframe");
     frame.className = "rcb__dart-execution-frame";
     frame.title = "Isolated dart execution frame";
     frame.setAttribute("aria-hidden", "true");
@@ -130,11 +133,13 @@ export class DartPadFrameExecutor implements DartFrameExecutor {
     return await new Promise<DartFrameExecution>((resolve, reject) => {
       let executionStarted = false;
       let settled = false;
-      const stdout: string[] = [];
-      const stderr: string[] = [];
+      const stdout = new BoundedOutput();
+      const stderr = new BoundedOutput();
+      let hasStderr = false;
       const cleanup = () => {
         window.clearTimeout(timer);
         window.removeEventListener("message", onMessage);
+        signal?.removeEventListener("abort", onAbort);
         frame.remove();
       };
       const finish = (exitCode: number) => {
@@ -144,8 +149,8 @@ export class DartPadFrameExecutor implements DartFrameExecutor {
         resolve({
           durationMs: performance.now() - started,
           exitCode,
-          stderr: stderr.join("\n"),
-          stdout: stdout.join("\n")
+          stderr: stderr.toString(),
+          stdout: stdout.toString()
         });
       };
       const failBeforeExecution = (message: string) => {
@@ -154,12 +159,19 @@ export class DartPadFrameExecutor implements DartFrameExecutor {
         cleanup();
         reject(new ProviderUnavailableError(message, "not-started"));
       };
+      const onAbort = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve({ durationMs: performance.now() - started, exitCode: 130, stderr: "Execution was cancelled.", stdout: "" });
+      };
       const onMessage = (event: MessageEvent<unknown>) => {
         if (event.source !== frame.contentWindow || event.origin !== "null") return;
         if (typeof event.data !== "object" || event.data === null) return;
         const data = event.data as Record<string, unknown>;
         if (data.sender !== "frame" || typeof data.type !== "string") return;
         if (data.type === "ready") {
+          if (executionStarted) return;
           executionStarted = true;
           frame.contentWindow?.postMessage({
             command: "execute",
@@ -168,23 +180,32 @@ export class DartPadFrameExecutor implements DartFrameExecutor {
           return;
         }
         if (typeof data.message === "string") {
-          if (data.type === "stdout") stdout.push(data.message);
-          if (data.type === "stderr" || data.type === "jserr") stderr.push(data.message);
+          if (data.type === "stdout") stdout.append(data.message);
+          if (data.type === "stderr" || data.type === "jserr") {
+            hasStderr = true;
+            stderr.append(data.message);
+          }
         }
-        if (data.type === "rcb-done") finish(stderr.length === 0 ? 0 : 1);
+        if (data.type === "rcb-done") finish(hasStderr ? 1 : 0);
       };
       const timer = window.setTimeout(() => {
         if (!executionStarted) {
           failBeforeExecution(`DartPad execution frame이 ${String(timeoutMs)} ms 안에 준비되지 않았습니다.`);
           return;
         }
-        stderr.push(`Dart browser execution exceeded ${String(timeoutMs)} ms and was stopped.`);
+        hasStderr = true;
+        stderr.append(`Dart browser execution exceeded ${String(timeoutMs)} ms and was stopped.`);
         finish(124);
       }, timeoutMs);
       frame.addEventListener("error", () => {
         if (!executionStarted) failBeforeExecution("DartPad execution frame을 불러오지 못했습니다.");
       }, { once: true });
       window.addEventListener("message", onMessage);
+      signal?.addEventListener("abort", onAbort, { once: true });
+      if (signal?.aborted === true) {
+        onAbort();
+        return;
+      }
       frame.src = this.#frameUrl;
     });
   }

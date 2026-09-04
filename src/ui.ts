@@ -1,12 +1,15 @@
 import type { RunnableBlockSpec, RunResult } from "./contracts";
+import { BoundedOutput } from "./output-buffer";
 import {
   createRunnableEditor,
   EDITOR_TRAILING_BLANK_LINE_COUNT,
   type RunnableEditor
 } from "./editor";
+import { appendElement, appendSvgElement } from "./dom";
 
 export interface MountedRunnableBlock {
   dispose(): void;
+  refreshAvailability(): Promise<void>;
 }
 
 function element<K extends keyof HTMLElementTagNameMap>(
@@ -15,15 +18,14 @@ function element<K extends keyof HTMLElementTagNameMap>(
   className: string,
   text?: string
 ): HTMLElementTagNameMap[K] {
-  return parent.createEl(name, { cls: className, text });
+  return appendElement(parent, name, { className, text });
 }
 
 function svgIcon(parent: Node, pathData: string, className: string): SVGSVGElement {
-  const icon = parent.createSvg("svg");
+  const icon = appendSvgElement(parent, "svg", className);
   icon.setAttribute("viewBox", "0 0 20 20");
   icon.setAttribute("aria-hidden", "true");
-  icon.classList.add(...className.split(/\s+/u).filter(Boolean));
-  const path = icon.createSvg("path");
+  const path = appendSvgElement(icon, "path");
   path.setAttribute("d", pathData);
   return icon;
 }
@@ -39,10 +41,10 @@ function environmentLabel(environment: RunnableBlockSpec["runner"]["environment"
 }
 
 function resultText(result: RunResult): string {
-  const parts: string[] = [];
-  if (result.stdout) parts.push(result.stdout.trimEnd());
-  if (result.stderr) parts.push(result.stderr.trimEnd());
-  return parts.join("\n");
+  const output = new BoundedOutput();
+  if (result.stdout) output.append(result.stdout.trimEnd());
+  if (result.stderr) output.append(result.stderr.trimEnd());
+  return output.toString();
 }
 
 function withTrailingBlankLines(code: string, count = EDITOR_TRAILING_BLANK_LINE_COUNT): string {
@@ -79,6 +81,7 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
   resetButton.hidden = true;
   const runButton = element(actions, "button", "rcb__button rcb__button--run");
   runButton.type = "button";
+  runButton.disabled = true;
   runButton.title = "Run (⌘/Ctrl+Enter)";
   runButton.setAttribute("aria-label", "Run code");
   const runIcon = svgIcon(runButton, "M6.5 4.75v10.5L15 10 6.5 4.75Z", "rcb__button-icon rcb__button-icon--run");
@@ -95,7 +98,8 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
   const consoleTitle = element(consoleHeader, "span", "rcb__console-title", "Output");
   const consoleMeta = element(consoleHeader, "span", "rcb__console-meta", "");
   const output = element(consolePanel, "pre", "rcb__output", "");
-  output.setAttribute("aria-live", "polite");
+  output.setAttribute("aria-label", "Execution output");
+  output.setAttribute("role", "log");
   const preview = element(consolePanel, "div", "rcb__preview");
   preview.hidden = true;
 
@@ -103,7 +107,9 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
   let running = false;
   let available = false;
   let availabilityDetail = "";
+  let availabilityRequest = 0;
   let disposePreview: () => void = () => undefined;
+  let executionController: AbortController | null = null;
 
   const setDirty = (dirty: boolean) => {
     resetButton.hidden = !dirty;
@@ -120,52 +126,114 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
     runLabel.textContent = value ? "Running…" : "Run";
   };
 
+  const applyAvailabilityState = () => {
+    runButton.disabled = running || !available;
+    status.title = availabilityDetail;
+    status.setAttribute("aria-label", available
+      ? `Ready to run. ${availabilityDetail}`
+      : `Runner unavailable. ${availabilityDetail}`);
+    environment.title = availabilityDetail;
+    notice.hidden = available;
+    notice.textContent = available ? "" : availabilityDetail;
+    if (!available) {
+      root.dataset.state = "unavailable";
+      status.textContent = "Runner unavailable";
+    } else if (!running) {
+      root.dataset.state = "idle";
+      status.textContent = "Ready to run";
+    }
+  };
+
+  const refreshAvailability = async (): Promise<boolean> => {
+    const request = ++availabilityRequest;
+    try {
+      const runnerStatus = await spec.runner.availability();
+      if (lifecycle.disposed || request !== availabilityRequest) return false;
+      available = runnerStatus.available;
+      availabilityDetail = runnerStatus.detail;
+    } catch (error) {
+      if (lifecycle.disposed || request !== availabilityRequest) return false;
+      available = false;
+      availabilityDetail = error instanceof Error ? error.message : String(error);
+    }
+    applyAvailabilityState();
+    return available;
+  };
+
   const run = async () => {
     if (lifecycle.disposed || running || !available) return;
     running = true;
     setRunning(true);
     root.dataset.state = "running";
     status.textContent = "Running code";
-    status.title = availabilityDetail;
-    consolePanel.hidden = false;
-    consoleTitle.textContent = "Output";
-    consoleMeta.textContent = "Running…";
-    consoleMeta.title = availabilityDetail;
-    output.hidden = false;
-    output.textContent = "Waiting for result…";
     disposePreview();
     preview.replaceChildren();
     preview.hidden = true;
     try {
-      const result = await spec.runner.run(withoutTrailingDisplayLines(editor.getValue()));
+      if (!await refreshAvailability()) {
+        consolePanel.hidden = true;
+        return;
+      }
+      root.dataset.environment = spec.runner.environment;
+      environmentName.textContent = environmentLabel(spec.runner.environment);
+      consolePanel.hidden = false;
+      consoleTitle.textContent = "Output";
+      consoleMeta.textContent = "Running…";
+      consoleMeta.title = availabilityDetail;
+      output.hidden = false;
+      output.textContent = "Waiting for result…";
+      executionController = new AbortController();
+      const result = await spec.runner.run(
+        withoutTrailingDisplayLines(editor.getValue()),
+        { signal: executionController.signal }
+      );
       if (lifecycle.disposed) return;
       const resultEnvironment = result.environment ?? spec.runner.environment;
       root.dataset.environment = resultEnvironment;
       environmentName.textContent = environmentLabel(resultEnvironment);
-      root.dataset.state = result.exitCode === 0 ? "success" : "error";
       const outcome = result.exitCode === 0 ? "Success" : "Failed";
       const duration = durationLabel(result.durationMs);
-      status.textContent = `${outcome} in ${duration}`;
-      status.title = result.provider ?? availabilityDetail;
-      consoleMeta.textContent = `${outcome} · ${duration}${result.provider ? ` · ${result.provider}` : ""}`;
-      consoleMeta.title = result.provider ?? "";
+      const finalizeResult = () => {
+        root.dataset.state = result.exitCode === 0 ? "success" : "error";
+        status.textContent = `${outcome} in ${duration}`;
+        status.title = result.provider ?? availabilityDetail;
+        status.setAttribute("aria-label", status.textContent);
+        consoleMeta.textContent = `${outcome} · ${duration}${result.provider ? ` · ${result.provider}` : ""}`;
+        consoleMeta.title = result.provider ?? "";
+      };
       const text = resultText(result);
       output.hidden = result.preview !== undefined && text === "";
       output.textContent = text || (result.preview === undefined ? "Process finished with no output." : "");
       if (result.preview !== undefined) {
-        const previewLogs: string[] = [];
-        disposePreview = renderPreview(preview, result.preview, ({ message, type }) => {
+        const previewLogs = new BoundedOutput();
+        let flushPending = false;
+        let previewFailed = false;
+        status.textContent = "Starting interactive preview";
+        consoleMeta.textContent = "Starting preview…";
+        const previewHandle = renderPreview(preview, result.preview, ({ message, type }) => {
           if (lifecycle.disposed) return;
           if (type === "ready") return;
-          previewLogs.push(message);
+          previewLogs.append(message);
           output.hidden = false;
-          output.textContent = previewLogs.join("\n");
+          if (!flushPending) {
+            flushPending = true;
+            queueMicrotask(() => {
+              flushPending = false;
+              if (!lifecycle.disposed) output.textContent = previewLogs.toString();
+            });
+          }
           if (type === "error") {
+            previewFailed = true;
             root.dataset.state = "error";
             status.textContent = "Interactive preview reported an error";
             consoleMeta.textContent = "Runtime error · interactive browser sandbox";
           }
         });
+        disposePreview = () => previewHandle.dispose();
+        await previewHandle.ready;
+        if (!lifecycle.disposed && !previewFailed) finalizeResult();
+      } else {
+        finalizeResult();
       }
     } catch (error) {
       if (lifecycle.disposed) return;
@@ -175,6 +243,7 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
       output.hidden = false;
       output.textContent = error instanceof Error ? error.message : String(error);
     } finally {
+      executionController = null;
       running = false;
       if (!lifecycle.disposed) setRunning(false);
     }
@@ -193,9 +262,7 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
     editor.setValue(editorInitialCode);
     root.dataset.environment = spec.runner.environment;
     environmentName.textContent = environmentLabel(spec.runner.environment);
-    root.dataset.state = "idle";
-    status.textContent = available ? "Ready to run" : "Runner unavailable";
-    status.title = availabilityDetail;
+    applyAvailabilityState();
     output.textContent = "";
     output.hidden = false;
     disposePreview();
@@ -210,40 +277,19 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
     editor.focus();
   });
 
-  void spec.runner.availability()
-    .then((runnerStatus) => {
-      if (lifecycle.disposed) return;
-      available = runnerStatus.available;
-      availabilityDetail = runnerStatus.detail;
-      runButton.disabled = !available;
-      root.dataset.state = available ? "idle" : "unavailable";
-      status.textContent = available ? "Ready to run" : "Runner unavailable";
-      status.title = runnerStatus.detail;
-      environment.title = runnerStatus.detail;
-      notice.hidden = available;
-      notice.textContent = available ? "" : runnerStatus.detail;
-    })
-    .catch((error: unknown) => {
-      if (lifecycle.disposed) return;
-      available = false;
-      availabilityDetail = error instanceof Error ? error.message : String(error);
-      runButton.disabled = true;
-      root.dataset.state = "unavailable";
-      status.textContent = "Runner unavailable";
-      status.title = availabilityDetail;
-      environment.title = availabilityDetail;
-      notice.hidden = false;
-      notice.textContent = availabilityDetail;
-    });
+  void refreshAvailability();
 
   return {
     dispose: () => {
+      if (lifecycle.disposed) return;
       lifecycle.disposed = true;
+      executionController?.abort();
       disposePreview();
       editor.destroy();
       spec.runner.dispose?.();
       root.remove();
-    }
+    },
+    refreshAvailability: async () => { await refreshAvailability(); }
   };
 }
 
@@ -252,32 +298,113 @@ interface PreviewMessage {
   type: "error" | "info" | "log" | "ready" | "warn";
 }
 
+interface PreviewHandle {
+  dispose(): void;
+  ready: Promise<void>;
+}
+
 function renderPreview(
   host: HTMLElement,
   preview: NonNullable<RunResult["preview"]>,
   onMessage: (message: PreviewMessage) => void
-): () => void {
+): PreviewHandle {
   host.replaceChildren();
-  const frame = host.createEl("iframe");
+  const frame = appendElement(host, "iframe");
+  const token = crypto.randomUUID();
   frame.className = "rcb__preview-frame";
   frame.dataset.scripts = preview.scripts;
-  frame.setAttribute("sandbox", preview.scripts === "isolated" ? "allow-scripts" : "");
+  frame.setAttribute("sandbox", "allow-scripts");
   frame.setAttribute("title", preview.scripts === "isolated" ? "Interactive code preview" : "Code preview");
+  let rejectReady: (error: Error) => void = () => undefined;
+  let resolveReady: () => void = () => undefined;
+  let readySettled = false;
+  const ready = new Promise<void>((resolve, reject) => {
+    rejectReady = reject;
+    resolveReady = resolve;
+  });
+  const readyTimeout = window.setTimeout(() => {
+    if (readySettled) return;
+    readySettled = true;
+    rejectReady(new Error("Interactive preview did not become ready within 5 seconds."));
+  }, 5_000);
   const receiveMessage = (event: MessageEvent<unknown>) => {
     if (event.source !== frame.contentWindow || event.origin !== "null") return;
     if (typeof event.data !== "object" || event.data === null) return;
     const data = event.data as Record<string, unknown>;
+    if (data.sender === "runnable-code-blocks-container" && data.type === "ready" && data.token === token) {
+      frame.contentWindow?.postMessage({
+        html: preview.html,
+        scripts: preview.scripts,
+        sender: "runnable-code-blocks-host",
+        token
+      }, "*");
+      return;
+    }
+    if (
+      data.sender === "runnable-code-blocks-container"
+      && data.type === "preview-ready"
+      && data.token === token
+    ) {
+      if (!readySettled) {
+        readySettled = true;
+        window.clearTimeout(readyTimeout);
+        resolveReady();
+      }
+      return;
+    }
     if (data.sender !== "runnable-code-blocks-preview") return;
     if (typeof data.message !== "string" || !isPreviewMessageType(data.type)) return;
-    onMessage({ message: data.message, type: data.type });
+    onMessage({ message: data.message.slice(0, 16_000), type: data.type });
   };
   window.addEventListener("message", receiveMessage);
-  frame.srcdoc = preview.html;
+  frame.srcdoc = previewContainerDocument(token);
   host.hidden = false;
-  return () => {
-    window.removeEventListener("message", receiveMessage);
-    frame.remove();
+  return {
+    dispose: () => {
+      if (!readySettled) {
+        readySettled = true;
+        window.clearTimeout(readyTimeout);
+        rejectReady(new Error("Interactive preview was disposed before it became ready."));
+      }
+      window.removeEventListener("message", receiveMessage);
+      frame.remove();
+    },
+    ready
   };
+}
+
+function previewContainerDocument(token: string): string {
+  const serializedToken = JSON.stringify(token);
+  return `<!doctype html><html><head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; connect-src 'none'; frame-src 'none'; img-src data: blob:; media-src data: blob:; object-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'">
+<style>html,body,#preview{border:0;height:100%;margin:0;width:100%}#preview{display:block}</style>
+</head><body><script>
+(() => {
+  const token = ${serializedToken};
+  let preview = null;
+  addEventListener("message", (event) => {
+    const data = event.data;
+    if (event.source === parent && data?.sender === "runnable-code-blocks-host" && data.token === token) {
+      if (preview !== null || typeof data.html !== "string" || data.html.length > 2000000) return;
+      preview = document.createElement("iframe");
+      preview.id = "preview";
+      preview.title = data.scripts === "isolated" ? "Interactive code result" : "Code result";
+      preview.setAttribute("sandbox", data.scripts === "isolated" ? "allow-scripts" : "");
+      preview.addEventListener("load", () => {
+        parent.postMessage({ sender: "runnable-code-blocks-container", type: "preview-ready", token }, "*");
+      }, { once: true });
+      preview.srcdoc = data.html;
+      document.body.replaceChildren(preview);
+      return;
+    }
+    if (preview === null || event.source !== preview.contentWindow || event.origin !== "null") return;
+    if (typeof data !== "object" || data === null || data.sender !== "runnable-code-blocks-preview") return;
+    if (!["error", "info", "log", "ready", "warn"].includes(data.type) || typeof data.message !== "string") return;
+    parent.postMessage({ sender: data.sender, type: data.type, message: data.message.slice(0, 16000) }, "*");
+  });
+  parent.postMessage({ sender: "runnable-code-blocks-container", type: "ready", token }, "*");
+})();
+</script></body></html>`;
 }
 
 function isPreviewMessageType(value: unknown): value is PreviewMessage["type"] {

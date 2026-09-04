@@ -13,6 +13,12 @@ import { mountRunnableBlock, type MountedRunnableBlock } from "./ui";
 
 class RunnableRenderChild extends MarkdownRenderChild {
   #mounted: MountedRunnableBlock | null = null;
+  readonly #onUnload: (child: RunnableRenderChild) => void;
+
+  constructor(containerEl: HTMLElement, onUnload: (child: RunnableRenderChild) => void) {
+    super(containerEl);
+    this.#onUnload = onUnload;
+  }
 
   mount(source: string, language: string, registry: RunnerRegistry): void {
     const runner = registry.create(language);
@@ -23,26 +29,33 @@ class RunnableRenderChild extends MarkdownRenderChild {
   override onunload(): void {
     this.#mounted?.dispose();
     this.#mounted = null;
+    this.#onUnload(this);
+  }
+
+  async refreshAvailability(): Promise<void> {
+    await this.#mounted?.refreshAvailability();
   }
 }
 
 export default class RunnableCodeBlocksPlugin extends Plugin {
   override settings: RunnableCodeBlocksSettings = { ...DEFAULT_SETTINGS };
+  readonly #renderChildren = new Set<RunnableRenderChild>();
 
   override async onload(): Promise<void> {
     await this.loadSettings();
     this.addSettingTab(new RunnableCodeBlocksSettingTab(this.app, this));
-    const registry = createRunnerRegistry({
+    const registry = createRunnerRegistry(() => ({
       executionOrder: this.settings.executionOrder,
       fetch: obsidianFetch,
       remoteExecutionEnabled: this.settings.remoteExecutionEnabled
-    });
+    }));
 
     for (const language of registry.languages()) {
       this.registerMarkdownCodeBlockProcessor(
         fenceForLanguage(language),
         (source, element, context) => {
-          const child = new RunnableRenderChild(element);
+          const child = new RunnableRenderChild(element, (unloaded) => this.#renderChildren.delete(unloaded));
+          this.#renderChildren.add(child);
           child.mount(source, language, registry);
           context.addChild(child);
         }
@@ -56,5 +69,6 @@ export default class RunnableCodeBlocksPlugin extends Plugin {
 
   async saveSettings(): Promise<void> {
     await this.saveData(this.settings);
+    await Promise.all([...this.#renderChildren].map(async (child) => await child.refreshAvailability()));
   }
 }

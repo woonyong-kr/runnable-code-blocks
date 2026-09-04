@@ -17,8 +17,11 @@ function runner(
 
 describe("FallbackRunner", () => {
   it("uses the first available provider and records its boundary", async () => {
-    const fallback = new FallbackRunner("python", [runner("remote"), runner("browser")]);
+    const browserAvailability = vi.fn(async () => ({ available: true, detail: "browser status" }));
+    const browser = { ...runner("browser"), availability: browserAvailability };
+    const fallback = new FallbackRunner("python", [runner("remote"), browser]);
     await expect(fallback.availability()).resolves.toMatchObject({ available: true });
+    expect(browserAvailability).not.toHaveBeenCalled();
     await expect(fallback.run("print(1)")).resolves.toMatchObject({
       environment: "remote",
       provider: "remote",

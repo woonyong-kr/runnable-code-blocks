@@ -2,6 +2,9 @@ import { requestUrl } from "obsidian";
 import type { FetchLike } from "./runners/http-client";
 
 export const obsidianFetch: FetchLike = async (input, init = {}) => {
+  if (init.signal?.aborted === true) {
+    throw new DOMException("The request was aborted.", "AbortError");
+  }
   const url = typeof input === "string"
     ? input
     : input instanceof URL

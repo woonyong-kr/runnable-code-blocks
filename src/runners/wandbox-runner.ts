@@ -1,4 +1,4 @@
-import type { CodeRunner, RunResult, RunnerAvailability } from "../contracts";
+import type { CodeRunner, RunContext, RunResult, RunnerAvailability } from "../contracts";
 import { fetchWithTimeout, type FetchLike, unavailableFetch } from "./http-client";
 import { ProviderUnavailableError, unknownRemoteFailure } from "./provider-errors";
 
@@ -61,7 +61,7 @@ export class WandboxRunner implements CodeRunner {
     }
   }
 
-  async run(code: string): Promise<RunResult> {
+  async run(code: string, context?: RunContext): Promise<RunResult> {
     if (this.#compiler === null) {
       throw new ProviderUnavailableError("Wandbox preflight에서 compiler를 선택하지 못했습니다.", "not-started");
     }
@@ -76,7 +76,8 @@ export class WandboxRunner implements CodeRunner {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ compiler: this.#compiler.name, code, save: false })
         },
-        this.#timeoutMs
+        this.#timeoutMs,
+        context?.signal
       );
     } catch (error) {
       throw unknownRemoteFailure("Wandbox", error);
@@ -88,7 +89,10 @@ export class WandboxRunner implements CodeRunner {
       }
       throw new ProviderUnavailableError(message, "unknown");
     }
-    const data = await response.json() as WandboxResponse;
+    const data = await response.json() as unknown;
+    if (!isWandboxResponse(data)) {
+      throw new ProviderUnavailableError("Wandbox가 유효한 실행 결과를 반환하지 않았습니다.", "unknown");
+    }
     if (isInfrastructureRejection(data)) {
       throw new ProviderUnavailableError(
         `Wandbox container가 실행 전에 거절되었습니다: ${data.program_error || data.compiler_error || "infrastructure unavailable"}`,
@@ -99,7 +103,7 @@ export class WandboxRunner implements CodeRunner {
     const stderr = [data.compiler_error, data.compiler_output, data.program_error]
       .filter((value): value is string => Boolean(value))
       .join("\n");
-    const parsedStatus = Number(data.status ?? (stderr ? 1 : 0));
+    const parsedStatus = Number(data.status);
     return {
       durationMs: performance.now() - started,
       environment: "remote",
@@ -133,6 +137,14 @@ export class WandboxRunner implements CodeRunner {
 function isInfrastructureRejection(data: WandboxResponse): boolean {
   const detail = `${data.compiler_error ?? ""}\n${data.program_error ?? ""}`;
   return data.status === "126" && /OCI runtime error|Resource temporarily unavailable/iu.test(detail);
+}
+
+function isWandboxResponse(value: unknown): value is WandboxResponse & { status: string } {
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Record<string, unknown>;
+  if (typeof record.status !== "string" || !/^-?\d+$/u.test(record.status.trim())) return false;
+  return ["compiler_error", "compiler_message", "compiler_output", "program_error", "program_output"]
+    .every((field) => record[field] === undefined || typeof record[field] === "string");
 }
 
 export function resetWandboxCompilerCache(): void {

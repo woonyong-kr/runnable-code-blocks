@@ -31,29 +31,14 @@ import {
 } from "@codemirror/view";
 import { javascript } from "@codemirror/lang-javascript";
 import { tags } from "@lezer/highlight";
-
-export const INTELLIJ_DARCULA_COLORS = {
-  comment: "#7A7E85",
-  error: "#BC3F3C",
-  function: "#56A8F5",
-  identifier: "#BCBEC4",
-  keyword: "#CF8E6D",
-  meta: "#BBB529",
-  number: "#2AACB8",
-  string: "#6AAB73",
-  type: "#C77DBB"
-} as const;
+import { appendElement } from "./dom";
 
 export const EDITOR_SOURCE_LINE_LIMIT = 100;
 export const EDITOR_TRAILING_BLANK_LINE_COUNT = 2;
 export const EDITOR_MAX_VISIBLE_LINE_COUNT =
   EDITOR_SOURCE_LINE_LIMIT + EDITOR_TRAILING_BLANK_LINE_COUNT;
 
-function syntaxColor(name: keyof typeof INTELLIJ_DARCULA_COLORS): string {
-  return `var(--rcb-syntax-${name}, ${INTELLIJ_DARCULA_COLORS[name]})`;
-}
-
-const intellijDarculaHighlightStyle = HighlightStyle.define([
+const hostHighlightStyle = HighlightStyle.define([
   {
     tag: [
       tags.keyword,
@@ -63,32 +48,32 @@ const intellijDarculaHighlightStyle = HighlightStyle.define([
       tags.moduleKeyword,
       tags.operatorKeyword
     ],
-    color: syntaxColor("keyword")
+    color: "var(--code-keyword, var(--text-accent, currentColor))"
   },
   {
     tag: [tags.function(tags.variableName), tags.function(tags.propertyName)],
-    color: syntaxColor("function")
+    color: "var(--code-function, var(--text-accent, currentColor))"
   },
   {
     tag: [tags.typeName, tags.className, tags.namespace],
-    color: syntaxColor("type")
+    color: "var(--code-important, var(--text-accent, currentColor))"
   },
   {
     tag: [tags.string, tags.docString, tags.character, tags.attributeValue, tags.regexp],
-    color: syntaxColor("string")
+    color: "var(--code-string, var(--text-normal, currentColor))"
   },
   {
     tag: [tags.number, tags.integer, tags.float, tags.bool, tags.null, tags.atom],
-    color: syntaxColor("number")
+    color: "var(--code-value, var(--text-normal, currentColor))"
   },
   {
     tag: [tags.comment, tags.lineComment, tags.blockComment, tags.docComment],
-    color: syntaxColor("comment"),
+    color: "var(--code-comment, var(--text-muted, currentColor))",
     fontStyle: "italic"
   },
   {
     tag: [tags.meta, tags.annotation, tags.macroName],
-    color: syntaxColor("meta")
+    color: "var(--code-tag, var(--text-accent, currentColor))"
   },
   {
     tag: [
@@ -99,16 +84,16 @@ const intellijDarculaHighlightStyle = HighlightStyle.define([
       tags.punctuation,
       tags.bracket
     ],
-    color: syntaxColor("identifier")
+    color: "var(--code-normal, var(--text-normal, currentColor))"
   },
   {
     tag: tags.invalid,
-    color: syntaxColor("error"),
+    color: "var(--text-error, currentColor)",
     textDecoration: "underline"
   }
 ]);
 
-const intellijKotlin: StreamParser<unknown> = {
+const kotlinWithFunctionNames: StreamParser<unknown> = {
   ...kotlin,
   token(stream, state) {
     const style = kotlin.token(stream, state);
@@ -140,7 +125,7 @@ function languageExtension(language: string) {
   if (language === "typescript") return javascript({ typescript: true });
   if (language === "react") return javascript({ jsx: true, typescript: true });
   if (language === "web" || language === "web-ts") return StreamLanguage.define(html);
-  if (language === "kotlin") return StreamLanguage.define(intellijKotlin);
+  if (language === "kotlin") return StreamLanguage.define(kotlinWithFunctionNames);
   const modes: Record<string, StreamParser<unknown>> = {
     c,
     cpp,
@@ -176,8 +161,7 @@ export function createRunnableEditor(
     "--rcb-editor-max-height",
     `calc(${String(EDITOR_MAX_VISIBLE_LINE_COUNT)}lh + 16px)`
   );
-  const accessibleLabel = parent.createSpan();
-  accessibleLabel.className = "rcb__sr-only";
+  const accessibleLabel = appendElement(parent, "span", { className: "rcb__sr-only" });
   accessibleLabel.id = `rcb-editor-label-${String(++editorLabelSequence)}`;
   accessibleLabel.textContent = `${language} runnable code editor`;
   parent.append(accessibleLabel);
@@ -192,7 +176,7 @@ export function createRunnableEditor(
       drawSelection(),
       indentOnInput(),
       bracketMatching(),
-      syntaxHighlighting(intellijDarculaHighlightStyle, { fallback: true }),
+      syntaxHighlighting(hostHighlightStyle, { fallback: true }),
       highlightActiveLine(),
       keymap.of([
         { key: "Mod-Enter", run: () => (onRun(), true) },

@@ -1,4 +1,4 @@
-import type { CodeRunner, RunResult, RunnerAvailability } from "../contracts";
+import type { CodeRunner, RunContext, RunResult, RunnerAvailability } from "../contracts";
 import { fetchWithTimeout, type FetchLike, unavailableFetch } from "./http-client";
 import { ProviderUnavailableError, unknownRemoteFailure } from "./provider-errors";
 
@@ -52,7 +52,7 @@ export class KotlinPlaygroundRunner implements CodeRunner {
     }
   }
 
-  async run(code: string): Promise<RunResult> {
+  async run(code: string, context?: RunContext): Promise<RunResult> {
     if (this.#version === null) {
       throw new ProviderUnavailableError("Kotlin Playground compiler version이 선택되지 않았습니다.", "not-started");
     }
@@ -71,7 +71,8 @@ export class KotlinPlaygroundRunner implements CodeRunner {
             files: [{ name: "File.kt", publicId: "", text: code }]
           })
         },
-        this.#timeoutMs
+        this.#timeoutMs,
+        context?.signal
       );
     } catch (error) {
       throw unknownRemoteFailure("Kotlin Playground", error);
@@ -82,7 +83,10 @@ export class KotlinPlaygroundRunner implements CodeRunner {
       }
       throw new ProviderUnavailableError(`Kotlin Playground HTTP ${String(response.status)}`, "unknown");
     }
-    const data = await response.json() as KotlinRunResponse;
+    const data = await response.json() as unknown;
+    if (!isKotlinRunResponse(data)) {
+      throw new ProviderUnavailableError("Kotlin Playground가 유효한 실행 결과를 반환하지 않았습니다.", "unknown");
+    }
     const diagnostics = Object.values(data.errors ?? {}).flat();
     const errors = diagnostics.filter((diagnostic) => diagnostic.severity === "ERROR");
     const stdout = streams(data.text ?? "", "outStream").join("");
@@ -106,4 +110,24 @@ export class KotlinPlaygroundRunner implements CodeRunner {
 function streams(text: string, tag: string): string[] {
   return [...text.matchAll(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, "gu"))]
     .map((match) => match[1] ?? "");
+}
+
+function isKotlinRunResponse(value: unknown): value is KotlinRunResponse {
+  if (typeof value !== "object" || value === null) return false;
+  const record = value as Record<string, unknown>;
+  return typeof record.text === "string" &&
+    isKotlinDiagnostics(record.errors) &&
+    Object.hasOwn(record, "exception");
+}
+
+function isKotlinDiagnostics(value: unknown): value is Record<string, KotlinDiagnostic[]> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return false;
+  return Object.values(value).every((diagnostics) =>
+    Array.isArray(diagnostics) && diagnostics.every((diagnostic) => {
+      if (typeof diagnostic !== "object" || diagnostic === null || Array.isArray(diagnostic)) return false;
+      const record = diagnostic as Record<string, unknown>;
+      return (record.message === undefined || typeof record.message === "string") &&
+        (record.severity === undefined || typeof record.severity === "string");
+    })
+  );
 }

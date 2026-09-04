@@ -1,26 +1,32 @@
 {
   "name": "runnable-code-blocks",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Run 24 Markdown code-block fences, including React JSX and TSX, without hosting an execution server.",
   "main": "main.js",
   "type": "module",
   "scripts": {
     "build": "node esbuild.config.mjs production",
     "demo:build": "node demo/scripts/build.mjs",
+    "demo:capture": "node demo/scripts/capture.mjs",
+    "demo:serve": "node scripts/serve-demo.mjs",
     "dev": "node esbuild.config.mjs",
     "check": "tsc --noEmit && eslint src tests site && node --check scripts/verify-release.mjs",
     "knip": "knip",
     "test": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "smoke:kotlin": "tsx scripts/smoke-remote.ts kotlin",
     "smoke:remote": "tsx scripts/smoke-remote.ts",
     "verify:release": "node scripts/verify-release.mjs",
-    "verify": "npm run check && npm run knip && npm test && npm run build && npm run verify:release && npm pack --dry-run"
+    "verify": "npm run check && npm run knip && npm test && npm run build && npm run verify:release && npm run test:e2e && npm pack --dry-run"
   },
   "knip": {
     "ignoreBinaries": [
       "ffmpeg",
       "ffprobe"
     ]
+  },
+  "overrides": {
+    "@codemirror/lint": "6.9.0"
   },
   "keywords": [
     "obsidian",
@@ -55,7 +61,7 @@
     "versions.json"
   ],
   "devDependencies": {
-    "@codemirror/commands": "^6.8.1",
+    "@codemirror/commands": "6.8.1",
     "@codemirror/lang-javascript": "^6.2.4",
     "@codemirror/language": "^6.11.3",
     "@codemirror/legacy-modes": "^6.5.1",
@@ -63,6 +69,7 @@
     "@codemirror/view": "^6.38.6",
     "@eslint/js": "^10.0.1",
     "@lezer/highlight": "^1.2.3",
+    "@playwright/test": "1.62.1",
     "@types/node": "^22.18.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
