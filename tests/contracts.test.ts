@@ -21,7 +21,7 @@ describe("runnable fence contract", () => {
 
   it("lists every implemented language and its environment", () => {
     expect(SUPPORTED_LANGUAGES.map(({ id }) => id)).toEqual([
-      "javascript", "typescript", "python", "sql", "html", "css", "web", "web-ts", "kotlin", "java",
+      "javascript", "typescript", "python", "sql", "html", "css", "web", "web-ts", "react", "kotlin", "java",
       "c", "cpp", "go", "rust", "csharp", "swift", "ruby", "php", "r", "scala",
       "dart", "lua", "shell"
     ]);
@@ -32,5 +32,6 @@ describe("runnable fence contract", () => {
     expect(SUPPORTED_LANGUAGES.filter(({ remoteAdapter }) => remoteAdapter === "wandbox")).toHaveLength(16);
     expect(supportedLanguagesDescription()).toContain("JavaScript — Obsidian: Wandbox → Web Worker");
     expect(supportedLanguagesDescription()).toContain("Kotlin — Obsidian: Kotlin Playground");
+    expect(supportedLanguagesDescription()).toContain("React (JSX/TSX) — Obsidian: React + Sucrase");
   });
 });

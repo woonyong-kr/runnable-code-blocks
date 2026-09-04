@@ -30,12 +30,33 @@ if (languageList !== null) {
 }
 
 const featuredTestCase = document.querySelector<HTMLElement>("[data-featured-test-case]");
-const featuredExample = LANGUAGE_EXAMPLES.find(({ language }) => language === "kotlin");
+const featuredExample = LANGUAGE_EXAMPLES.find(({ language }) => language === "react");
 if (featuredTestCase !== null && featuredExample !== undefined) {
   appendExample(featuredTestCase, {
     ...featuredExample,
-    code: 'fun main() {\n    val note = "Obsidian"\n    println("Hello from $note!")\n}',
-    expected: "Hello from Obsidian!"
+    code: `import { useState } from "react";
+
+export default function Counter() {
+  const [count, setCount] = useState<number>(0);
+  return (
+    <button
+      onClick={() => setCount((value) => value + 1)}
+      style={{
+        padding: "10px 16px",
+        border: 0,
+        borderRadius: 8,
+        background: "#3574f0",
+        color: "white",
+        font: "inherit",
+        fontWeight: 700,
+        cursor: "pointer"
+      }}
+    >
+      Clicked {count} times
+    </button>
+  );
+}`,
+    expected: "A working React counter"
   }, true);
 }
 

@@ -1,6 +1,8 @@
 import { defineConfig } from "vitest/config";
+import { reactRuntimeVitePlugin } from "./scripts/react-runtime-plugin.mjs";
 
 export default defineConfig({
+  plugins: [reactRuntimeVitePlugin()],
   resolve: {
     alias: {
       obsidian: new URL("./tests/obsidian-runtime.ts", import.meta.url).pathname

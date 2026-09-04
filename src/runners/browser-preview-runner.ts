@@ -1,7 +1,8 @@
 import { getVersion, transform } from "sucrase";
+import reactRuntime from "virtual:react-runtime";
 import type { CodeRunner, RunResult } from "../contracts";
 
-type PreviewLanguage = "css" | "html" | "web" | "web-ts";
+type PreviewLanguage = "css" | "html" | "react" | "web" | "web-ts";
 
 const STATIC_CSP = [
   "default-src 'none'",
@@ -71,6 +72,19 @@ const CONSOLE_BRIDGE = String.raw`${INTERACTIVE_BASE_STYLE}<script>
 })();
 </script>`;
 
+const REACT_ROOT = '<div id="root"></div>';
+
+const REACT_MODULES = String.raw`
+const require = (specifier) => {
+  if (specifier === "react") return runtime.React;
+  if (specifier === "react-dom" || specifier === "react-dom/client") {
+    return { createRoot: runtime.createRoot };
+  }
+  throw new Error(
+    "Unsupported import: " + specifier + ". run-react includes React and ReactDOM; use one self-contained example."
+  );
+};`;
+
 export class BrowserPreviewRunner implements CodeRunner {
   readonly environment = "browser" as const;
   readonly language: PreviewLanguage;
@@ -83,10 +97,10 @@ export class BrowserPreviewRunner implements CodeRunner {
     if (typeof document === "undefined") {
       return { available: false, detail: "Preview에는 DOM이 필요합니다." };
     }
-    return this.language === "web" || this.language === "web-ts"
+    return this.language === "react" || this.language === "web" || this.language === "web-ts"
       ? {
           available: true,
-          detail: "JavaScript는 fetch/XHR/WebSocket, 외부 리소스, 팝업, form 제출, top navigation 및 same-origin 접근이 차단된 iframe에서 실행됩니다."
+          detail: "대화형 코드는 fetch/XHR/WebSocket, 외부 리소스, 팝업, form 제출, top navigation 및 same-origin 접근이 차단된 iframe에서 실행됩니다."
         }
       : {
           available: true,
@@ -95,6 +109,31 @@ export class BrowserPreviewRunner implements CodeRunner {
   }
 
   async run(code: string): Promise<RunResult> {
+    if (this.language === "react") {
+      const started = performance.now();
+      const provider = `React ${reactRuntime.version} · Sucrase ${getVersion()} → interactive browser sandbox`;
+      try {
+        const compiled = compileReactModule(code);
+        const application = reactApplication(compiled);
+        return {
+          ...previewResult(
+            secureDocument(application, INTERACTIVE_CSP, CONSOLE_BRIDGE),
+            "isolated",
+            provider
+          ),
+          durationMs: performance.now() - started
+        };
+      } catch (error) {
+        return {
+          durationMs: performance.now() - started,
+          environment: "browser",
+          exitCode: 1,
+          provider,
+          stderr: error instanceof Error ? error.message : String(error),
+          stdout: ""
+        };
+      }
+    }
     if (this.language === "web") {
       return previewResult(
         secureDocument(code, INTERACTIVE_CSP, CONSOLE_BRIDGE),
@@ -128,6 +167,39 @@ export class BrowserPreviewRunner implements CodeRunner {
     }
     return previewResult(secureDocument(code, STATIC_CSP), "blocked", "Sandboxed HTML preview");
   }
+}
+
+function compileReactModule(code: string): string {
+  return transform(code, {
+    disableESTransforms: true,
+    jsxRuntime: "classic",
+    production: true,
+    transforms: ["typescript", "jsx", "imports"]
+  }).code;
+}
+
+function reactApplication(compiled: string): string {
+  const runtime = escapeClosingScript(reactRuntime.source);
+  const application = escapeClosingScript(compiled);
+  return `${REACT_ROOT}<script>${runtime}</script><script>
+(() => {
+  const runtime = globalThis.__RCB_REACT_RUNTIME__;
+  if (!runtime) throw new Error("React runtime failed to initialize.");
+  const React = runtime.React;
+  const module = { exports: {} };
+  const exports = module.exports;
+  ${REACT_MODULES}
+  ${application}
+  const exported = module.exports;
+  const Component = exported.default || exported.App;
+  if (typeof Component !== "function" && typeof Component !== "object") {
+    throw new Error("run-react requires an exported default component or a named App export.");
+  }
+  const container = document.querySelector("#root");
+  if (!container) throw new Error("React preview root is missing.");
+  runtime.createRoot(container).render(React.createElement(Component));
+})();
+</script>`;
 }
 
 function previewResult(
@@ -171,4 +243,8 @@ function transpileTypeScriptScripts(html: string): string {
 
 function escapeClosingStyle(css: string): string {
   return css.replace(/<\/style/giu, "<\\/style");
+}
+
+function escapeClosingScript(javascript: string): string {
+  return javascript.replace(/<\/script/giu, "<\\/script");
 }

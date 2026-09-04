@@ -1,11 +1,13 @@
 import esbuild from "esbuild";
 import { copyFile, mkdir, rm } from "node:fs/promises";
+import { reactRuntimePlugin } from "./scripts/react-runtime-plugin.mjs";
 
 const production = process.argv[2] === "production";
 const shared = {
   bundle: true,
   logLevel: "info",
   minify: production,
+  plugins: [reactRuntimePlugin()],
   sourcemap: production ? false : "inline",
   target: "es2022",
   treeShaking: true,
@@ -33,4 +35,3 @@ await Promise.all([
   copyFile("site/index.html", "dist-site/index.html"),
   copyFile("styles.css", "dist-site/styles.css"),
 ]);
-

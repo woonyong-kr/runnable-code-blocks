@@ -39,7 +39,7 @@ This conservative boundary prevents a remote timeout, lost connection, or ambigu
 | `dartpad-runner.ts` | Dart | `stable.api.dartpad.dev` compiles source; returned JavaScript runs in a temporary sandboxed `dartpad.dev/frame.html` |
 | `javascript-runner.ts` | JavaScript | Fresh local Web Worker |
 | `typescript-runner.ts` | TypeScript | Bundled TypeScript transpiler → fresh Web Worker |
-| `browser-preview-runner.ts` | HTML, CSS | Script-disabled sandboxed iframe with restrictive CSP |
+| `browser-preview-runner.ts` | HTML, CSS, Web, Web TypeScript, React JSX/TSX | Static or interactive sandboxed iframe with restrictive CSP; React and ReactDOM are bundled at build time |
 
 External providers are public services, not project infrastructure. They may change endpoints, compiler names, CORS, limits, or availability without a release from this project. They provide convenience execution, not an uptime guarantee. DartPad's old arbitrary-code embed protocol is not used; its supported compile API and execution frame are separate adapter steps.
 
@@ -57,7 +57,7 @@ Provider churn should remain a narrow patch:
 4. Run `npm run verify`, followed by the explicit provider smoke command for that language.
 5. Change `src/supported-languages.ts` only when the public support claim or adapter mapping changes.
 
-Shared UI and Markdown parsing must not import provider-specific request schemas. `scripts/verify-release.mjs` checks the adapter inventory, 21-fence documentation, network-origin allowlist, forbidden runtime Node imports, bundle ceiling, and version alignment.
+Shared UI and Markdown parsing must not import provider-specific request schemas. `scripts/verify-release.mjs` checks the adapter inventory, 24-fence documentation, network-origin allowlist, forbidden runtime Node imports, bundle ceiling, and version alignment.
 
 ## Adding a language
 
@@ -71,4 +71,4 @@ A supported language requires all of the following:
 - a successful build and, where applicable, live smoke evidence;
 - README and release-verifier coverage.
 
-Do not claim “all languages.” The project currently supports the exact 23-fence catalog documented in the README.
+Do not claim “all languages.” The project currently supports the exact 24-fence catalog documented in the README.

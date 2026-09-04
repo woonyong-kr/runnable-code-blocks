@@ -46,6 +46,35 @@ describe("browser adapters", () => {
     expect(result.preview?.html).toContain('type="text/javascript"');
   });
 
+  it("compiles a React JSX and TypeScript component into the shared isolated preview", async () => {
+    const result = await new BrowserPreviewRunner("react").run(`
+      import { useState } from "react";
+      export default function Counter() {
+        const [count, setCount] = useState<number>(0);
+        return <button onClick={() => setCount(count + 1)}>Clicked {count} times</button>;
+      }
+    `);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.provider).toMatch(/React \d+\.\d+\.\d+/u);
+    expect(result.preview?.scripts).toBe("isolated");
+    expect(result.preview?.html).toContain("connect-src 'none'");
+    expect(result.preview?.html).toContain('__RCB_REACT_RUNTIME__');
+    expect(result.preview?.html).toContain("React.createElement");
+    expect(result.preview?.html).not.toContain("useState<number>");
+  });
+
+  it("reports React JSX and TypeScript compilation errors before opening a preview", async () => {
+    const result = await new BrowserPreviewRunner("react").run(
+      "export default function Broken() { return <button>"
+    );
+
+    expect(result.exitCode).toBe(1);
+    expect(result.provider).toMatch(/React \d+\.\d+\.\d+/u);
+    expect(result.preview).toBeUndefined();
+    expect(result.stderr).not.toBe("");
+  });
+
   it("reports invalid or missing TypeScript script blocks without opening a preview", async () => {
     const invalid = await new BrowserPreviewRunner("web-ts").run(
       '<script type="text/typescript">const value: = 4;</script>'

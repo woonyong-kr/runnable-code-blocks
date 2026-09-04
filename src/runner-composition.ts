@@ -72,6 +72,7 @@ function browserRunners(language: SupportedLanguage): CodeRunner[] {
       return [new BrowserTypeScriptRunner()];
     case "html":
     case "css":
+    case "react":
     case "web":
     case "web-ts":
       return [new BrowserPreviewRunner(language.id)];

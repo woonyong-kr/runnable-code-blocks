@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0
+
+- Add `run-react` for self-contained React components written in JSX or TSX, with hooks, events, fragments, and automatic root mounting.
+- Bundle React and ReactDOM into both the Obsidian plugin and static adapter so React examples require no CDN, account, API key, or project-owned execution server.
+- Reuse the existing catalog, runner composition, CodeMirror editor, isolated iframe, Console, error, duration, and Reset contracts instead of creating a separate playground path.
+- Keep React previews at an opaque origin with network, forms, popups, top navigation, objects, external resources, and same-origin access blocked.
+- Feature a working React counter on the deployed static demo and expose the exact bundled React and Sucrase versions in the result header.
+
 ## 0.3.0
 
 - Keep the primary Run action anchored at the toolbar edge while its icon and label change to a visible `Running…` state.

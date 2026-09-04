@@ -1,7 +1,7 @@
 {
   "name": "runnable-code-blocks",
-  "version": "0.3.0",
-  "description": "Run 23 Markdown code-block fences in Obsidian and static websites without hosting an execution server.",
+  "version": "0.4.0",
+  "description": "Run 24 Markdown code-block fences, including React JSX and TSX, without hosting an execution server.",
   "main": "main.js",
   "type": "module",
   "scripts": {
@@ -17,7 +17,10 @@
     "verify": "npm run check && npm run knip && npm test && npm run build && npm run verify:release && npm pack --dry-run"
   },
   "knip": {
-    "ignoreBinaries": ["ffmpeg", "ffprobe"]
+    "ignoreBinaries": [
+      "ffmpeg",
+      "ffprobe"
+    ]
   },
   "keywords": [
     "obsidian",
@@ -61,6 +64,8 @@
     "@eslint/js": "^10.0.1",
     "@lezer/highlight": "^1.2.3",
     "@types/node": "^22.18.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
     "@vitest/coverage-v8": "^4.1.11",
     "esbuild": "^0.25.9",
     "eslint": "^10.0.1",
@@ -73,5 +78,9 @@
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.42.0",
     "vitest": "^4.1.11"
+  },
+  "dependencies": {
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   }
 }

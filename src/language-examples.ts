@@ -32,6 +32,16 @@ export const LANGUAGE_EXAMPLES: readonly LanguageExample[] = [
     console.log(button.textContent);
   });
 </script>`, "Interactive TypeScript button preview"),
+  example("react", `import { useState } from "react";
+
+export default function Counter() {
+  const [count, setCount] = useState<number>(0);
+  return (
+    <button onClick={() => setCount((value) => value + 1)}>
+      Clicked {count} times
+    </button>
+  );
+}`, "Interactive React component preview"),
   example("kotlin", 'fun main() { println("kotlin-ok") }', "kotlin-ok"),
   example("java", 'class Main { public static void main(String[] args) { System.out.println("java-ok"); } }', "java-ok"),
   example("c", '#include <stdio.h>\nint main(void) { puts("c-ok"); return 0; }', "c-ok"),

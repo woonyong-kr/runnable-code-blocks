@@ -138,6 +138,7 @@ let editorLabelSequence = 0;
 function languageExtension(language: string) {
   if (language === "javascript") return javascript();
   if (language === "typescript") return javascript({ typescript: true });
+  if (language === "react") return javascript({ jsx: true, typescript: true });
   if (language === "web" || language === "web-ts") return StreamLanguage.define(html);
   if (language === "kotlin") return StreamLanguage.define(intellijKotlin);
   const modes: Record<string, StreamParser<unknown>> = {

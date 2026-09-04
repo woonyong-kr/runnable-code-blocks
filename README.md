@@ -26,7 +26,7 @@
 
 Runnable Code Blocks keeps the explanation, the experiment, and the result in one note. Readers edit a temporary copy, press **Run**, and see exactly which browser or public provider produced the output; the Markdown source stays portable and unchanged.
 
-- **23 exact runnable fences** — 21 programming languages plus interactive JavaScript and TypeScript Web documents.
+- **24 exact runnable fences** — 21 programming languages plus interactive JavaScript, TypeScript, and React documents.
 - **No execution server to host** — browser-native runners and named public providers work in Obsidian and the static adapter.
 - **Portable Markdown** — the document stores ordinary `run-<language>` fences instead of plugin-specific state.
 - **Disposable editing** — change and run a sample freely; **Reset** or reopening the rendered note restores the Markdown source.
@@ -38,7 +38,7 @@ Runnable Code Blocks keeps the explanation, the experiment, and the result in on
 | --- | --- |
 | Learn beside an explanation | Replaces `run-<language>` fences with temporary editable runners in Reading view |
 | Keep Markdown portable | Stores only ordinary fenced code in the note; editor state and output are disposable |
-| Avoid hosting a backend | Uses six browser-native fences and named public execution providers |
+| Avoid hosting a backend | Uses seven browser-native fences and named public execution providers |
 | Publish the same lesson | Shares the parser, catalog, runner composition, editor, and output UI with the static adapter |
 | Understand the trust boundary | Labels the selected provider before execution and keeps remote execution configurable |
 
@@ -78,6 +78,26 @@ For a clickable browser component, keep HTML, CSS, and JavaScript together in `r
 
 Use `run-web-ts` and `<script type="text/typescript">` for the same component with TypeScript. Plain `run-typescript` remains an isolated console program, so existing notes do not silently gain DOM access.
 
+For a React documentation-style component, use one self-contained JSX or TSX module:
+
+````markdown
+```run-react
+import { useState } from "react";
+
+export default function Counter() {
+  const [count, setCount] = useState<number>(0);
+
+  return (
+    <button onClick={() => setCount((value) => value + 1)}>
+      Clicked {count} times
+    </button>
+  );
+}
+```
+````
+
+`run-react` bundles React and ReactDOM with the plugin, accepts JSX and TSX in the same fence, automatically mounts the default component, and preserves the same Run, Console, error, Reset, and sandbox behavior. React and `react-dom/client` imports are available; arbitrary packages and relative multi-file imports are intentionally rejected so the note remains deterministic and server-free.
+
 ## What happens when you press Run
 
 1. The exact fence chooses one entry from the shared language catalog.
@@ -102,7 +122,7 @@ The UI follows an IntelliJ New UI-inspired editor and tool-window hierarchy: lin
 
 ## Supported languages
 
-Version 0.3.0 defines the following stable fences. “Remote” means source is sent to the named provider; this project does not operate an execution server.
+Version 0.4.0 defines the following stable fences. “Remote” means source is sent to the named provider; this project does not operate an execution server.
 
 | Fence | Static web | Obsidian |
 | --- | --- | --- |
@@ -114,6 +134,7 @@ Version 0.3.0 defines the following stable fences. “Remote” means source is 
 | `run-css` | Sandboxed preview iframe | Sandboxed preview iframe |
 | `run-web` | Interactive isolated iframe | Interactive isolated iframe |
 | `run-web-ts` | Sucrase → interactive isolated iframe | Sucrase → interactive isolated iframe |
+| `run-react` | Bundled React + Sucrase → isolated iframe | Bundled React + Sucrase → isolated iframe |
 | `run-kotlin` | Kotlin Playground | Kotlin Playground |
 | `run-java` | Wandbox | Wandbox |
 | `run-c` | Wandbox | Wandbox |
@@ -135,10 +156,12 @@ Version 0.3.0 defines the following stable fences. “Remote” means source is 
 Code runs only after **Run** or the keyboard shortcut. Treat every runnable block as executable code.
 
 - Remote execution is enabled and remote-first by default so the same Markdown works on a static deployment.
-- Settings can choose browser-first or disable remote execution. With remote execution disabled, only JavaScript, TypeScript, HTML, and CSS have browser-native adapters.
+- Settings can choose browser-first or disable remote execution. With remote execution disabled, JavaScript, TypeScript, HTML, CSS, Web, Web TypeScript, and React remain browser-native.
 - JavaScript and transpiled TypeScript run in a fresh Web Worker with common network globals blocked, a five-second timeout, and termination after every run.
 - HTML and CSS render in a sandboxed, script-disabled iframe with a restrictive Content Security Policy. CSS is applied to a reusable card, button, and text specimen.
-- Interactive `run-web` documents may use inline HTML, CSS, and JavaScript inside a fresh opaque-origin iframe. `run-web-ts` transpiles `<script type="text/typescript">` blocks before using the same sandbox. Fetch/XHR/WebSocket calls, subresource loading, forms, popups, top navigation, objects, and same-origin access remain blocked.
+- Interactive `run-web` documents may use inline HTML, CSS, and JavaScript inside a fresh opaque-origin iframe. `run-web-ts` transpiles `<script type="text/typescript">` blocks before using the same sandbox.
+- `run-react` transpiles a self-contained JSX or TSX module with Sucrase and mounts its default export with bundled React and ReactDOM. Only `react`, `react-dom`, and `react-dom/client` imports are available; no package is downloaded while running a note.
+- All interactive previews block Fetch/XHR/WebSocket calls, subresource loading, forms, popups, top navigation, objects, and same-origin access.
 - Kotlin Playground, Wandbox, SwiftFiddle, and DartPad receive source only when their adapter is selected.
 - The Community Plugin does not access the filesystem, spawn local processes, install runtimes, or modify `PATH`.
 
@@ -155,7 +178,8 @@ Open **Settings → Community plugins → Runnable Code Blocks**:
 ## Troubleshooting
 
 - **Run is unavailable:** hover or focus the status text to see which provider preflight failed. Public providers can be temporarily unavailable.
-- **Only six fences work after disabling remote execution:** this is expected. JavaScript, TypeScript, HTML, CSS, Web, and Web TypeScript are browser-native.
+- **Only seven fences work after disabling remote execution:** this is expected. JavaScript, TypeScript, HTML, CSS, Web, Web TypeScript, and React are browser-native.
+- **A React import is rejected:** `run-react` deliberately includes only React and ReactDOM. Keep the example self-contained instead of importing arbitrary npm or relative modules.
 - **Edits disappeared after Reset or reopening the note:** this is intentional. Change the Markdown source when you want to keep an example.
 - **A program failed but no fallback ran:** compile errors, runtime failures, and unknown remote outcomes are completed attempts, so the plugin avoids executing the same code twice.
 
@@ -167,7 +191,7 @@ The browser adapter recognizes ordinary rendered Markdown:
 <pre><code class="language-run-python">print("Hello")</code></pre>
 ```
 
-It shares the fence parser, language catalog, runner composition, editor, and output UI with the Obsidian plugin. No API key, database, Vercel function, Supabase project, or project-owned backend is required. The deployed adapter is available as a [live 23-fence demo](https://woonyong-kr.github.io/obsidian-runnable-code-blocks/).
+It shares the fence parser, language catalog, runner composition, editor, and output UI with the Obsidian plugin. No API key, database, Vercel function, Supabase project, or project-owned backend is required. The deployed adapter is available as a [live 24-fence demo](https://woonyong-kr.github.io/obsidian-runnable-code-blocks/).
 
 ## Architecture and maintenance
 
@@ -184,7 +208,7 @@ When a public provider changes, its adapter can be repaired and released without
 
 ## Installation and compatibility
 
-Install from **Settings → Community plugins → Browse → Runnable Code Blocks**. Version 0.3.0 supports Obsidian 1.13.0 or later on desktop and mobile.
+Install from **Settings → Community plugins → Browse → Runnable Code Blocks**. Version 0.4.0 supports Obsidian 1.13.0 or later on desktop and mobile.
 
 For a manual release install, download `main.js`, `manifest.json`, and `styles.css` from the [latest release](https://github.com/woonyong-kr/obsidian-runnable-code-blocks/releases/latest) into `.obsidian/plugins/runnable-code-blocks/`, then reload Obsidian.
 
@@ -208,7 +232,7 @@ npm run verify
 npm run smoke:remote
 ```
 
-`npm run verify` runs TypeScript and ESLint checks, Knip unused-code analysis, 76 isolated tests with coverage, production builds, release-policy validation, and an npm package dry run. `npm run smoke:remote` intentionally submits the public sample programs to third-party providers, so results remain provider-dependent.
+`npm run verify` runs TypeScript and ESLint checks, Knip unused-code analysis, 79 isolated tests with coverage, production builds, release-policy validation, and an npm package dry run. `npm run smoke:remote` intentionally submits the public sample programs to third-party providers, so results remain provider-dependent.
 
 The build creates:
 

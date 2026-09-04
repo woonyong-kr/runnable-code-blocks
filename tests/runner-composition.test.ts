@@ -42,6 +42,17 @@ describe("runner composition", () => {
     await expect(runner.availability()).resolves.toMatchObject({ available: true });
   });
 
+  it("provides a bundled React JSX and TSX preview without remote execution", async () => {
+    const react = supportedLanguage("react");
+    if (react === null) throw new Error("react missing");
+    const runner = composeLanguageRunner(react, { remoteExecutionEnabled: false });
+    await expect(runner.availability()).resolves.toMatchObject({ available: true });
+    await expect(runner.run("export default function App() { return <p>Hello</p>; }")).resolves.toMatchObject({
+      exitCode: 0,
+      preview: { scripts: "isolated" }
+    });
+  });
+
   it("makes non-browser languages explicitly unavailable in private web mode", async () => {
     const python = supportedLanguage("python");
     if (python === null) throw new Error("python missing");

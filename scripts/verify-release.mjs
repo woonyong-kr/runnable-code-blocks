@@ -30,7 +30,7 @@ const imageDimensions = (data, path) => {
 };
 
 const supportedLanguages = [
-  "javascript", "typescript", "python", "sql", "html", "css", "web", "web-ts", "kotlin", "java", "c", "cpp",
+  "javascript", "typescript", "python", "sql", "html", "css", "web", "web-ts", "react", "kotlin", "java", "c", "cpp",
   "go", "rust", "csharp", "swift", "ruby", "php", "r", "scala", "dart", "lua", "shell"
 ];
 const requiredAdapters = [
