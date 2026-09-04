@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { CodeRunner } from "../src/contracts";
+import type { CodeRunner, RunResult } from "../src/contracts";
 import {
   EDITOR_MAX_VISIBLE_LINE_COUNT,
   EDITOR_SOURCE_LINE_LIMIT,
@@ -49,7 +49,7 @@ describe("runnable block UI", () => {
     await Promise.resolve();
     host.querySelector<HTMLButtonElement>(".rcb__button--secondary")?.click();
 
-    expect(host.querySelector(".rcb__status")?.textContent).toBe("Ready");
+    expect(host.querySelector(".rcb__status")?.textContent).toBe("Ready to run");
     expect(host.querySelector(".rcb__output")?.textContent).toBe("");
     expect(host.querySelector<HTMLElement>(".rcb__console")?.hidden).toBe(true);
     expect(host.querySelector<HTMLButtonElement>(".rcb__button--secondary")?.hidden).toBe(true);
@@ -66,6 +66,20 @@ describe("runnable block UI", () => {
       number: "#2AACB8",
       string: "#6AAB73"
     });
+  });
+
+  it("renders both Run icons without treating multiple classes as one token", async () => {
+    const host = document.body.appendChild(document.createElement("div"));
+    mountRunnableBlock(host, {
+      code: "console.log('source')",
+      language: "javascript",
+      runner: createRunner()
+    });
+    await Promise.resolve();
+
+    expect(host.querySelector(".rcb__button-icon--run")).not.toBeNull();
+    expect(host.querySelector(".rcb__button-icon--running")).not.toBeNull();
+    expect(host.querySelector(".cm-editor")).not.toBeNull();
   });
 
   it("lets 100 source lines plus two numbered editing lines grow before scrolling", async () => {
@@ -101,7 +115,39 @@ describe("runnable block UI", () => {
     expect(host.querySelector(".rcb__output")?.textContent).toBe("sandbox failed");
   });
 
-  it("clears a previous provider label before showing a later runner error", async () => {
+  it("shows a stable animated running action and waiting output", async () => {
+    let finish: ((result: RunResult) => void) | undefined;
+    const result = new Promise<RunResult>((resolve) => {
+      finish = resolve;
+    });
+    const host = document.body.appendChild(document.createElement("div"));
+    mountRunnableBlock(host, {
+      code: "console.log('later')",
+      language: "javascript",
+      runner: createRunner({ run: async () => await result })
+    });
+    await Promise.resolve();
+
+    const button = host.querySelector<HTMLButtonElement>(".rcb__button--run");
+    button?.click();
+    await Promise.resolve();
+
+    expect(button?.getAttribute("aria-busy")).toBe("true");
+    expect(button?.textContent).toBe("Running…");
+    expect(host.querySelector<SVGElement>(".rcb__button-icon--running")?.hasAttribute("hidden")).toBe(false);
+    expect(host.querySelector(".rcb__console-meta")?.textContent).toBe("Running…");
+    expect(host.querySelector(".rcb__output")?.textContent).toBe("Waiting for result…");
+
+    finish?.({ durationMs: 12, exitCode: 0, provider: "Test runner", stderr: "", stdout: "done" });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(button?.getAttribute("aria-busy")).toBe("false");
+    expect(button?.textContent).toBe("Run");
+    expect(host.querySelector(".rcb__console-meta")?.textContent).toBe("Success · 12 ms · Test runner");
+  });
+
+  it("clears previous result metadata before showing a later runner error", async () => {
     const host = document.body.appendChild(document.createElement("div"));
     const runner = createRunner({
       run: vi
@@ -121,12 +167,12 @@ describe("runnable block UI", () => {
     button?.click();
     await Promise.resolve();
     await Promise.resolve();
-    expect(host.querySelector(".rcb__console-title")?.textContent).toBe("Output · First provider");
+    expect(host.querySelector(".rcb__console-meta")?.textContent).toBe("Success · 2 ms · First provider");
 
     button?.click();
     await Promise.resolve();
     await Promise.resolve();
-    expect(host.querySelector(".rcb__console-title")?.textContent).toBe("Output");
+    expect(host.querySelector(".rcb__console-meta")?.textContent).toBe("Runner error");
     expect(host.querySelector(".rcb__output")?.textContent).toBe("second run failed");
   });
 
@@ -200,7 +246,7 @@ describe("runnable block UI", () => {
         run: async () => ({
           durationMs: 0,
           exitCode: 0,
-          preview: { html: "<h1>Hello</h1>", kind: "html" },
+          preview: { html: "<h1>Hello</h1>", kind: "html", scripts: "blocked" },
           stderr: "",
           stdout: "Preview rendered."
         })
@@ -214,6 +260,34 @@ describe("runnable block UI", () => {
     const frame = host.querySelector<HTMLIFrameElement>('.rcb__preview-frame');
     expect(frame?.getAttribute("sandbox")).toBe("");
     expect(frame?.srcdoc).toBe("<h1>Hello</h1>");
+  });
+
+  it("allows scripts only for the isolated interactive web preview", async () => {
+    const host = document.body.appendChild(document.createElement("div"));
+    mountRunnableBlock(host, {
+      code: "<button>Run</button>",
+      language: "web",
+      runner: createRunner({
+        language: "web",
+        run: async () => ({
+          durationMs: 0,
+          exitCode: 0,
+          preview: { html: "<button>Run</button>", kind: "html", scripts: "isolated" },
+          provider: "Interactive browser sandbox",
+          stderr: "",
+          stdout: ""
+        })
+      })
+    });
+    await Promise.resolve();
+    host.querySelector<HTMLButtonElement>(".rcb__button--run")?.click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const frame = host.querySelector<HTMLIFrameElement>(".rcb__preview-frame");
+    expect(frame?.getAttribute("sandbox")).toBe("allow-scripts");
+    expect(frame?.title).toBe("Interactive code preview");
+    expect(host.querySelector<HTMLElement>(".rcb__output")?.hidden).toBe(true);
   });
 
   it("shows the provider environment that actually completed a fallback run", async () => {
@@ -253,6 +327,6 @@ describe("runnable block UI", () => {
     await Promise.resolve();
 
     expect(host.querySelector<HTMLElement>(".rcb__console")?.hidden).toBe(true);
-    expect(host.querySelector(".rcb__status")?.textContent).toBe("Ready");
+    expect(host.querySelector(".rcb__status")?.textContent).toBe("Ready to run");
   });
 });

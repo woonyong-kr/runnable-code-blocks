@@ -26,4 +26,6 @@ The contract is intentionally a design and interaction contract, not a runtime d
 - The editor grows through 100 source lines plus two numbered editing lines; internal scrolling starts with source line 101.
 - Empty output, detail, and search regions do not reserve space.
 - Secondary actions stay quiet and appear only when relevant.
+- The primary Run action stays anchored at the toolbar end. During execution its icon and label become a spinner and `Running…` without moving the action edge.
+- Idle readiness stays out of the visual toolbar; running, success, failure, duration, and provider details belong to the Output tool-window header and an accessible live region.
 - Primary content must remain usable at 390 CSS pixels without horizontal page overflow.

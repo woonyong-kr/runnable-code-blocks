@@ -30,7 +30,7 @@ const imageDimensions = (data, path) => {
 };
 
 const supportedLanguages = [
-  "javascript", "typescript", "python", "sql", "html", "css", "kotlin", "java", "c", "cpp",
+  "javascript", "typescript", "python", "sql", "html", "css", "web", "web-ts", "kotlin", "java", "c", "cpp",
   "go", "rust", "csharp", "swift", "ruby", "php", "r", "scala", "dart", "lua", "shell"
 ];
 const requiredAdapters = [
@@ -61,7 +61,7 @@ if (versions[manifest.version] !== manifest.minAppVersion) errors.push("versions
 if (releaseMedia.version !== manifest.version) errors.push("release media version does not match manifest");
 if (releaseMedia.publicSafeSample !== true) errors.push("release media must use a public-safe sample");
 if (manifest.isDesktopOnly !== false) errors.push("browser/remote-only plugin must remain available beyond desktop");
-if (!packageJson.repository?.url?.endsWith("woonyong-kr/runnable-code-blocks.git")) {
+if (!packageJson.repository?.url?.endsWith("woonyong-kr/obsidian-runnable-code-blocks.git")) {
   errors.push("package repository is not the approved source");
 }
 for (const file of [
@@ -123,7 +123,9 @@ if (!source.includes("executionState === \"not-started\"")) {
 if (!readme.includes("does not access the filesystem")) errors.push("Community runtime boundary is not documented");
 if (!readme.includes("docs/assets/runnable-code-blocks-preview.png")) errors.push("README does not show the sharp execution preview");
 if (!readme.includes("docs/assets/runnable-code-blocks-demo.gif")) errors.push("README does not show the animated execution demo");
-if (!source.includes("script-src \\'none\\'")) errors.push("HTML/CSS previews must block scripts");
+if (!source.includes("script-src 'none'")) errors.push("HTML/CSS previews must block scripts");
+if (!source.includes("script-src 'unsafe-inline'")) errors.push("interactive web previews must explicitly allow inline scripts");
+if (!source.includes('"allow-scripts"')) errors.push("interactive web previews must use an isolated script sandbox");
 const discoveredOrigins = [...source.matchAll(/https?:\/\/[A-Za-z0-9.-]+/gu)].map(([origin]) => origin);
 for (const origin of new Set(discoveredOrigins)) {
   if (!approvedOrigins.has(origin)) errors.push(`runtime source contains an unapproved network origin: ${origin}`);

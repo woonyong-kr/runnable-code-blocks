@@ -9,8 +9,29 @@ export const LANGUAGE_EXAMPLES: readonly LanguageExample[] = [
   example("typescript", 'const message: string = "typescript-ok";\nconsole.log(message);', "typescript-ok"),
   example("python", 'print("python-ok")', "python-ok"),
   example("sql", "select 'sql-ok';", "sql-ok"),
-  example("html", "<h1>html-ok</h1>", "html-ok"),
-  example("css", '.preview::after { content: "css-ok"; color: #6aab73; }', "css-ok"),
+  example("html", '<button class="demo-button">HTML button</button>', "Static button preview"),
+  example("css", '.preview-button { background: #3574f0; color: white; transform: translateY(-2px); }', "Styled component preview"),
+  example("web", `<button id="counter">Clicked 0 times</button>
+<style>
+  #counter { padding: 10px 16px; border: 0; border-radius: 8px; background: #3574f0; color: white; }
+</style>
+<script>
+  let count = 0;
+  const button = document.querySelector("#counter");
+  button.addEventListener("click", () => {
+    button.textContent = \`Clicked \${++count} times\`;
+    console.log(button.textContent);
+  });
+</script>`, "Interactive button preview"),
+  example("web-ts", `<button id="counter">Clicked 0 times</button>
+<script type="text/typescript">
+  let count: number = 0;
+  const button = document.querySelector<HTMLButtonElement>("#counter")!;
+  button.addEventListener("click", () => {
+    button.textContent = \`Clicked \${++count} times\`;
+    console.log(button.textContent);
+  });
+</script>`, "Interactive TypeScript button preview"),
   example("kotlin", 'fun main() { println("kotlin-ok") }', "kotlin-ok"),
   example("java", 'class Main { public static void main(String[] args) { System.out.println("java-ok"); } }', "java-ok"),
   example("c", '#include <stdio.h>\nint main(void) { puts("c-ok"); return 0; }', "c-ok"),

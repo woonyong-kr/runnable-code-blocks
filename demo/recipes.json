@@ -1,0 +1,18 @@
+[
+  {
+    "id": "runnable-code-blocks",
+    "output": "runnable-code-blocks-demo.gif",
+    "width": 1600,
+    "height": 900,
+    "fps": 10,
+    "frameDuration": 1.6,
+    "fadeDuration": 0.2,
+    "frames": [
+      "captures/frames/01-ready.png",
+      "captures/frames/02-edited.png",
+      "captures/frames/03-running.png",
+      "captures/frames/04-output.png",
+      "captures/frames/05-web.png"
+    ]
+  }
+]

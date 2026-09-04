@@ -10,9 +10,12 @@ const nativeFetch = Reflect.get(global, "fetch") as FetchLike;
 Reflect.set(global, "window", global);
 
 const selected = new Set(process.argv.slice(2));
-const remoteExamples = LANGUAGE_EXAMPLES.filter(({ language }) =>
-  !["html", "css", "dart"].includes(language) && (selected.size === 0 || selected.has(language))
-);
+const remoteExamples = LANGUAGE_EXAMPLES.filter(({ language }) => {
+  const definition = SUPPORTED_LANGUAGES.find(({ id }) => id === language);
+  return definition?.remoteAdapter !== "browser-preview"
+    && language !== "dart"
+    && (selected.size === 0 || selected.has(language));
+});
 for (const example of remoteExamples) {
   const language = SUPPORTED_LANGUAGES.find(({ id }) => id === example.language);
   if (language === undefined) throw new Error(`Missing language ${example.language}`);

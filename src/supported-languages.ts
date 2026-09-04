@@ -17,6 +17,8 @@ export const SUPPORTED_LANGUAGES = [
   language("sql", "SQL (SQLite)", "Wandbox", "Wandbox", "wandbox", "SQL"),
   language("html", "HTML", "Sandboxed preview iframe", "Sandboxed preview iframe", "browser-preview"),
   language("css", "CSS", "Sandboxed preview iframe", "Sandboxed preview iframe", "browser-preview"),
+  language("web", "Web (HTML/CSS/JS)", "Interactive isolated iframe", "Interactive isolated iframe", "browser-preview"),
+  language("web-ts", "Web (HTML/CSS/TypeScript)", "Sucrase → interactive isolated iframe", "Sucrase → interactive isolated iframe", "browser-preview"),
   language("kotlin", "Kotlin", "Kotlin Playground", "Kotlin Playground", "kotlin-playground"),
   language("java", "Java", "Wandbox", "Wandbox", "wandbox", "Java"),
   language("c", "C", "Wandbox", "Wandbox", "wandbox", "C"),

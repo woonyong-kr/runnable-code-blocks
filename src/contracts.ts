@@ -15,6 +15,7 @@ export interface RunResult {
   preview?: {
     html: string;
     kind: "html";
+    scripts: "blocked" | "isolated";
   };
   stderr: string;
   stdout: string;

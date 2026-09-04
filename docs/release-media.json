@@ -1,20 +1,26 @@
 {
-  "version": "0.2.8",
-  "capturedWith": "Obsidian 1.13.7 and the static web adapter",
-  "capturedAt": "2026-09-01",
+  "version": "0.3.0",
+  "capturedWith": "Static web adapter rendered in Chromium",
+  "capturedAt": "2026-09-05",
   "publicSafeSample": true,
   "assets": [
     {
       "path": "docs/assets/runnable-code-blocks-demo.gif",
       "width": 1600,
       "height": 900,
-      "sha256": "a4ba41a95ce77cdc47ddc7d6b5392d45eb7b9c8481b6cbe37d88679e893861bb"
+      "sha256": "43cff8c1b3c96e2e9d1a0200ac170739f0f85571071a6ede7f49475ec3987436"
     },
     {
       "path": "docs/assets/runnable-code-blocks-preview.png",
       "width": 1600,
       "height": 900,
-      "sha256": "7cb2ad4055f3fcab61f9c5b7201e02c693241ae4bb1867f1fbfcdc75d4a79e22"
+      "sha256": "8b4952ae65e2bc252ac7c5d9eb681259dfd110de62cfb96e20ab85a2849bb659"
+    },
+    {
+      "path": "docs/assets/runnable-web-preview.png",
+      "width": 1600,
+      "height": 900,
+      "sha256": "1b2821f01d83e44148dd55bb7229aa20eb9689ee89586213ea0d1cb878159b8b"
     }
   ]
 }

@@ -25,6 +25,23 @@ describe("runner composition", () => {
     await expect(runner.availability()).resolves.toMatchObject({ available: true });
   });
 
+  it("provides an isolated interactive web preview without remote execution", async () => {
+    const web = supportedLanguage("web");
+    if (web === null) throw new Error("web missing");
+    const runner = composeLanguageRunner(web, { remoteExecutionEnabled: false });
+    await expect(runner.availability()).resolves.toMatchObject({ available: true });
+    await expect(runner.run("<button>Run</button>")).resolves.toMatchObject({
+      preview: { scripts: "isolated" }
+    });
+  });
+
+  it("provides an isolated TypeScript web preview without remote execution", async () => {
+    const webTypeScript = supportedLanguage("web-ts");
+    if (webTypeScript === null) throw new Error("web-ts missing");
+    const runner = composeLanguageRunner(webTypeScript, { remoteExecutionEnabled: false });
+    await expect(runner.availability()).resolves.toMatchObject({ available: true });
+  });
+
   it("makes non-browser languages explicitly unavailable in private web mode", async () => {
     const python = supportedLanguage("python");
     if (python === null) throw new Error("python missing");

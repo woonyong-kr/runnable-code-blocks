@@ -71,4 +71,4 @@ A supported language requires all of the following:
 - a successful build and, where applicable, live smoke evidence;
 - README and release-verifier coverage.
 
-Do not claim “all languages.” The project currently supports the exact 21-language catalog documented in the README.
+Do not claim “all languages.” The project currently supports the exact 23-fence catalog documented in the README.

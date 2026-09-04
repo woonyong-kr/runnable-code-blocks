@@ -21,7 +21,7 @@ describe("runnable fence contract", () => {
 
   it("lists every implemented language and its environment", () => {
     expect(SUPPORTED_LANGUAGES.map(({ id }) => id)).toEqual([
-      "javascript", "typescript", "python", "sql", "html", "css", "kotlin", "java",
+      "javascript", "typescript", "python", "sql", "html", "css", "web", "web-ts", "kotlin", "java",
       "c", "cpp", "go", "rust", "csharp", "swift", "ruby", "php", "r", "scala",
       "dart", "lua", "shell"
     ]);

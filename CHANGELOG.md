@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+
+- Keep the primary Run action anchored at the toolbar edge while its icon and label change to a visible `Running…` state.
+- Move duration, result, and provider information into the Output header and show a deterministic waiting state during execution.
+- Add `run-web` for interactive HTML, CSS, and JavaScript in a fresh opaque-origin iframe with network, form, popup, navigation, object, and same-origin access blocked.
+- Replace the CSS placeholder with a reusable component specimen so CSS examples visibly style a card, button, and supporting text.
+- Keep `run-html` and `run-css` script-disabled, preserve conditional Reset, and forward isolated web-preview console output and runtime errors to Output.
+
 ## 0.2.8
 
 - Remove CodeMirror's nested focus outline so the editor no longer looks like a selected region while typing.
