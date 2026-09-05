@@ -303,6 +303,9 @@ interface PreviewHandle {
   ready: Promise<void>;
 }
 
+const PREVIEW_HEIGHT_MINIMUM = 1;
+const PREVIEW_HEIGHT_MAXIMUM = 10_000;
+
 function renderPreview(
   host: HTMLElement,
   preview: NonNullable<RunResult["preview"]>,
@@ -353,6 +356,11 @@ function renderPreview(
       return;
     }
     if (data.sender !== "runnable-code-blocks-preview") return;
+    if (data.type === "resize" && typeof data.height === "number") {
+      const height = previewHeight(data.height);
+      if (height !== undefined) frame.style.height = `${String(height)}px`;
+      return;
+    }
     if (typeof data.message !== "string" || !isPreviewMessageType(data.type)) return;
     onMessage({ message: data.message.slice(0, 16_000), type: data.type });
   };
@@ -377,11 +385,17 @@ function previewContainerDocument(token: string): string {
   const serializedToken = JSON.stringify(token);
   return `<!doctype html><html><head>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; connect-src 'none'; frame-src 'none'; img-src data: blob:; media-src data: blob:; object-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'">
-<style>html,body,#preview{border:0;height:100%;margin:0;width:100%}#preview{display:block}</style>
+<style>html,body{border:0;margin:0;width:100%}#preview{border:0;display:block;min-height:1px;width:100%}</style>
 </head><body><script>
 (() => {
   const token = ${serializedToken};
   let preview = null;
+  const minimumHeight = ${String(PREVIEW_HEIGHT_MINIMUM)};
+  const maximumHeight = ${String(PREVIEW_HEIGHT_MAXIMUM)};
+  const previewHeight = (value) => {
+    if (!Number.isFinite(value)) return null;
+    return Math.min(maximumHeight, Math.max(minimumHeight, Math.ceil(value)));
+  };
   addEventListener("message", (event) => {
     const data = event.data;
     if (event.source === parent && data?.sender === "runnable-code-blocks-host" && data.token === token) {
@@ -389,7 +403,7 @@ function previewContainerDocument(token: string): string {
       preview = document.createElement("iframe");
       preview.id = "preview";
       preview.title = data.scripts === "isolated" ? "Interactive code result" : "Code result";
-      preview.setAttribute("sandbox", data.scripts === "isolated" ? "allow-scripts" : "");
+      preview.setAttribute("sandbox", "allow-scripts");
       preview.addEventListener("load", () => {
         parent.postMessage({ sender: "runnable-code-blocks-container", type: "preview-ready", token }, "*");
       }, { once: true });
@@ -399,12 +413,24 @@ function previewContainerDocument(token: string): string {
     }
     if (preview === null || event.source !== preview.contentWindow || event.origin !== "null") return;
     if (typeof data !== "object" || data === null || data.sender !== "runnable-code-blocks-preview") return;
+    if (data.type === "resize" && typeof data.height === "number") {
+      const height = previewHeight(data.height);
+      if (height === null) return;
+      preview.style.height = height + "px";
+      parent.postMessage({ sender: data.sender, type: data.type, height }, "*");
+      return;
+    }
     if (!["error", "info", "log", "ready", "warn"].includes(data.type) || typeof data.message !== "string") return;
     parent.postMessage({ sender: data.sender, type: data.type, message: data.message.slice(0, 16000) }, "*");
   });
   parent.postMessage({ sender: "runnable-code-blocks-container", type: "ready", token }, "*");
 })();
 </script></body></html>`;
+}
+
+function previewHeight(value: number): number | undefined {
+  if (!Number.isFinite(value)) return undefined;
+  return Math.min(PREVIEW_HEIGHT_MAXIMUM, Math.max(PREVIEW_HEIGHT_MINIMUM, Math.ceil(value)));
 }
 
 function isPreviewMessageType(value: unknown): value is PreviewMessage["type"] {

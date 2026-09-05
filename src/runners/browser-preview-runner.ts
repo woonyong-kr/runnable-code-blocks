@@ -90,6 +90,45 @@ const CONSOLE_BRIDGE = String.raw`${INTERACTIVE_BASE_STYLE}<script>
 })();
 </script>`;
 
+const HEIGHT_REPORTER = String.raw`
+(() => {
+  let queued = false;
+  const report = () => {
+    queued = false;
+    const root = document.documentElement;
+    const body = document.body;
+    const height = Math.max(
+      1,
+      root.scrollHeight,
+      root.offsetHeight,
+      body?.scrollHeight ?? 0,
+      body?.offsetHeight ?? 0
+    );
+    parent.postMessage({ sender: "runnable-code-blocks-preview", type: "resize", height }, "*");
+  };
+  const schedule = () => {
+    if (queued) return;
+    queued = true;
+    setTimeout(report, 0);
+  };
+  if (typeof ResizeObserver === "function") {
+    const observer = new ResizeObserver(schedule);
+    observer.observe(document.documentElement);
+    if (document.body) observer.observe(document.body);
+  }
+  new MutationObserver(schedule).observe(document.documentElement, {
+    attributes: true,
+    characterData: true,
+    childList: true,
+    subtree: true
+  });
+  addEventListener("DOMContentLoaded", schedule, { once: true });
+  addEventListener("load", schedule, { once: true });
+  schedule();
+  setTimeout(schedule, 50);
+  setTimeout(schedule, 250);
+})();`;
+
 const REACT_ROOT = '<div id="root"></div>';
 
 const REACT_MODULES = String.raw`
@@ -237,9 +276,13 @@ function previewResult(
 
 function secureDocument(html: string, policy: string, prefix = ""): string {
   const document_ = new DOMParser().parseFromString(html, "text/html");
+  const nonce = createNonce();
   const security = appendElement(document_.head, "meta");
   security.setAttribute("http-equiv", "Content-Security-Policy");
-  security.setAttribute("content", policy);
+  security.setAttribute(
+    "content",
+    policy.replace("script-src 'none'", `script-src 'nonce-${nonce}'`)
+  );
   if (prefix !== "") {
     const trusted = new DOMParser().parseFromString(
       `<!doctype html><html><head>${prefix}</head><body></body></html>`,
@@ -249,7 +292,15 @@ function secureDocument(html: string, policy: string, prefix = ""): string {
   } else {
     document_.head.prepend(security);
   }
+  const heightReporter = appendElement(document_.body, "script");
+  heightReporter.setAttribute("nonce", nonce);
+  heightReporter.textContent = HEIGHT_REPORTER;
   return `<!doctype html>${document_.documentElement.outerHTML}`;
+}
+
+function createNonce(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return btoa(String.fromCharCode(...bytes));
 }
 
 function transpileTypeScriptScripts(html: string): string {

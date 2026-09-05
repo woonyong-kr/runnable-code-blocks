@@ -379,9 +379,40 @@ describe("runnable block UI", () => {
 
     const frame = host.querySelector<HTMLIFrameElement>(".rcb__preview-frame");
     expect(frame?.getAttribute("sandbox")).toBe("allow-scripts");
-    expect(frame?.srcdoc).toContain('preview.setAttribute("sandbox", data.scripts === "isolated" ? "allow-scripts" : "")');
+    expect(frame?.srcdoc).toContain('preview.setAttribute("sandbox", "allow-scripts")');
     expect(frame?.title).toBe("Interactive code preview");
     expect(host.querySelector<HTMLElement>(".rcb__output")?.hidden).toBe(true);
+  });
+
+  it("fits the outer preview frame to the height reported by the isolated result", async () => {
+    const host = document.body.appendChild(document.createElement("div"));
+    mountRunnableBlock(host, {
+      code: "<main>Result</main>",
+      language: "web",
+      runner: createRunner({
+        language: "web",
+        run: async () => ({
+          durationMs: 0,
+          exitCode: 0,
+          preview: { html: "<main>Result</main>", kind: "html", scripts: "isolated" },
+          stderr: "",
+          stdout: ""
+        })
+      })
+    });
+    await Promise.resolve();
+    host.querySelector<HTMLButtonElement>(".rcb__button--run")?.click();
+    await settleAsyncUi();
+
+    const frame = host.querySelector<HTMLIFrameElement>(".rcb__preview-frame");
+    window.dispatchEvent(new MessageEvent("message", {
+      data: { sender: "runnable-code-blocks-preview", type: "resize", height: 732 },
+      origin: "null",
+      source: frame?.contentWindow
+    }));
+
+    expect(frame?.style.height).toBe("732px");
+    expect(frame?.srcdoc).toContain("preview.style.height = height + \"px\"");
   });
 
   it("shows the provider environment that actually completed a fallback run", async () => {

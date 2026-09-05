@@ -158,7 +158,7 @@ Code runs only after **Run** or the keyboard shortcut. Treat every runnable bloc
 - Remote execution is enabled and remote-first by default so the same Markdown works on a static deployment.
 - Settings can choose browser-first or disable remote execution. With remote execution disabled, JavaScript, TypeScript, HTML, CSS, Web, Web TypeScript, and React remain browser-native.
 - JavaScript and transpiled TypeScript run in a fresh disposable Web Worker with a five-second timeout. Common direct network globals are shadowed, but the Worker is a lifecycle boundary rather than a security sandbox; run only code you trust.
-- HTML and CSS render in a sandboxed, script-disabled iframe with a restrictive Content Security Policy. CSS is applied to a reusable card, button, and text specimen.
+- HTML and CSS render in an opaque sandboxed iframe. Their authored scripts remain blocked by a restrictive Content Security Policy; only the nonce-bound internal height reporter can run so the result can expand without an internal scrollbar. CSS is applied to a reusable card, button, and text specimen.
 - Interactive `run-web` documents may use inline HTML, CSS, and JavaScript inside a fresh opaque-origin iframe. `run-web-ts` transpiles `<script type="text/typescript">` blocks before using the same sandbox.
 - `run-react` transpiles a self-contained JSX or TSX module with Sucrase and mounts its default export with bundled React and ReactDOM. Only `react`, `react-dom`, and `react-dom/client` imports are available; no package is downloaded while running a note.
 - All interactive previews block Fetch/XHR/WebSocket calls, subresource loading, forms, popups, top navigation, objects, and same-origin access.

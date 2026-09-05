@@ -3,13 +3,19 @@ import { BrowserPreviewRunner } from "../src/runners/browser-preview-runner";
 import { BrowserTypeScriptRunner } from "../src/runners/typescript-runner";
 
 describe("browser adapters", () => {
-  it("wraps HTML and CSS previews in a network-blocking CSP", async () => {
-    const html = await new BrowserPreviewRunner("html").run("<h1>Hello</h1>");
+  it("wraps HTML and CSS previews in a network-blocking CSP with only the height reporter allowed", async () => {
+    const html = await new BrowserPreviewRunner("html").run("<h1>Hello</h1><script>window.userScript = true</script>");
     const css = await new BrowserPreviewRunner("css").run(".preview { color: red; }");
     expect(html.preview?.html).toContain("Content-Security-Policy");
-    expect(html.preview?.html).toContain("script-src 'none'");
+    expect(html.preview?.html).toMatch(/script-src 'nonce-[^']+'/u);
     expect(html.preview?.scripts).toBe("blocked");
     expect(html.preview?.html).toContain("<h1>Hello</h1>");
+    const staticDocument = new DOMParser().parseFromString(html.preview?.html ?? "", "text/html");
+    const staticScripts = staticDocument.querySelectorAll("script");
+    expect(staticScripts).toHaveLength(2);
+    expect(staticScripts[0]?.getAttribute("nonce")).toBeNull();
+    expect(staticScripts[1]?.getAttribute("nonce")).toBeTruthy();
+    expect(staticScripts[1]?.textContent).toContain('type: "resize"');
     expect(css.preview?.html).toContain(".preview { color: red; }");
     expect(css.preview?.html).toContain("Style a real component");
     const documentWithHead = await new BrowserPreviewRunner("html").run("<html><head><title>x</title></head><body>x</body></html>");
