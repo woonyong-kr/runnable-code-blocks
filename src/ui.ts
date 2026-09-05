@@ -87,7 +87,6 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
   const runIcon = svgIcon(runButton, "M6.5 4.75v10.5L15 10 6.5 4.75Z", "rcb__button-icon rcb__button-icon--run");
   const runningIcon = svgIcon(runButton, "M10 3.25a6.75 6.75 0 1 1-5.4 2.7", "rcb__button-icon rcb__button-icon--running");
   runningIcon.setAttribute("hidden", "");
-  const runLabel = element(runButton, "span", "rcb__button-label", "Run");
 
   const editorHost = element(root, "div", "rcb__editor");
   const notice = element(root, "div", "rcb__notice");
@@ -123,7 +122,8 @@ export function mountRunnableBlock(host: HTMLElement, spec: RunnableBlockSpec): 
     root.setAttribute("aria-busy", value ? "true" : "false");
     runIcon.toggleAttribute("hidden", value);
     runningIcon.toggleAttribute("hidden", !value);
-    runLabel.textContent = value ? "Running…" : "Run";
+    runButton.setAttribute("aria-label", value ? "Running code" : "Run code");
+    runButton.title = value ? "Running code" : "Run (⌘/Ctrl+Enter)";
   };
 
   const applyAvailabilityState = () => {

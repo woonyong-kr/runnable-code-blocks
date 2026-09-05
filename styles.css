@@ -144,7 +144,9 @@
 .rcb__button--run {
   background: var(--rcb-accent);
   color: var(--text-on-accent, #ffffff);
-  min-width: 66px;
+  min-width: calc(var(--rcb-control-height) - 4px);
+  padding: 0;
+  width: calc(var(--rcb-control-height) - 4px);
 }
 
 .rcb__button--run:hover:not(:disabled) {
@@ -153,8 +155,8 @@
 
 .rcb__button-icon {
   fill: currentColor;
-  height: 11px;
-  width: 11px;
+  height: 13px;
+  width: 13px;
 }
 
 .rcb__button-icon--running {

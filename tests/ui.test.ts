@@ -135,7 +135,8 @@ describe("runnable block UI", () => {
     await settleAsyncUi();
 
     expect(button?.getAttribute("aria-busy")).toBe("true");
-    expect(button?.textContent).toBe("Running…");
+    expect(button?.textContent).toBe("");
+    expect(button?.getAttribute("aria-label")).toBe("Running code");
     expect(host.querySelector<SVGElement>(".rcb__button-icon--running")?.hasAttribute("hidden")).toBe(false);
     expect(host.querySelector(".rcb__console-meta")?.textContent).toBe("Running…");
     expect(host.querySelector(".rcb__output")?.textContent).toBe("Waiting for result…");
@@ -144,7 +145,8 @@ describe("runnable block UI", () => {
     await settleAsyncUi();
 
     expect(button?.getAttribute("aria-busy")).toBe("false");
-    expect(button?.textContent).toBe("Run");
+    expect(button?.textContent).toBe("");
+    expect(button?.getAttribute("aria-label")).toBe("Run code");
     expect(host.querySelector(".rcb__console-meta")?.textContent).toBe("Success · 12 ms · Test runner");
   });
 
